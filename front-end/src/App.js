@@ -5,13 +5,24 @@ import LoginPage from './pages/Login';
 import ProductosPage from './pages/Productos';
 import Inicio from './pages/Inicio';
 import Navbar from './components/comunes/Navbar'; 
+import VentasPage from './pages/Ventas';
+import InventarioPage from './pages/Inventario';
+import ResetPassword from './pages/ResetPassword';
 import './App.css';
+
+// Componente de carga mejorado
+const LoadingSpinner = () => (
+  <div className="loading-container">
+    <div className="loading-spinner"></div>
+    <p>Cargando...</p>
+  </div>
+);
 
 const PrivateRoute = ({ element: Element, ...rest }) => {
   const { usuario, loading } = useContext(AuthContext);
 
   if (loading) {
-    return <div>Cargando...</div>;
+    return <LoadingSpinner />;
   }
 
   return usuario ? <Element {...rest} /> : <Navigate to="/login" />;
@@ -19,17 +30,23 @@ const PrivateRoute = ({ element: Element, ...rest }) => {
 
 const AppContent = () => {
   const location = useLocation();
-  const showNavbarAndFooter = location.pathname !== '/login';
+  const { loading } = useContext(AuthContext);
+  const showNavbarAndFooter = !['/login', '/reset-password'].includes(location.pathname);
 
   return (
     <>
       {showNavbarAndFooter && <Navbar />}
-      <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/" element={<Inicio />} />
-        <Route path="/productos" element={<PrivateRoute element={ProductosPage} />} />
-        <Route path="*" element={<Navigate to="/login" />} />
-      </Routes>
+      <div className={showNavbarAndFooter ? "app-content" : ""}>
+        <Routes>
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/" element={<PrivateRoute element={Inicio} />} />
+          <Route path="/productos" element={<PrivateRoute element={ProductosPage} />} />
+          <Route path="/ventas" element={<PrivateRoute element={VentasPage} />} />
+          <Route path="/inventario" element={<PrivateRoute element={InventarioPage} />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="*" element={loading ? <LoadingSpinner /> : <Navigate to="/login" />} />
+        </Routes>
+      </div>
       {showNavbarAndFooter && (
         <footer className="footer">
           <div className="container">

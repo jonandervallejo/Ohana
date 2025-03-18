@@ -6,6 +6,11 @@
   color: white;
   padding: 0 2rem;
   height: 70px;
+  position: fixed; 
+  top: 0; 
+  left: 0;
+  right: 0;
+  z-index: 1000; 
 }
 
 .navbar-logo h2 {
@@ -54,29 +59,161 @@
 
 .navbar-user-menu {
   position: absolute;
-  top: 100%;
+  top: calc(100% + 10px);
   right: 0;
   background-color: white;
   color: black;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin-top: 0.5rem;
+  border-radius: 8px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+  min-width: 200px;
+  overflow: hidden;
+  transform-origin: top right;
+  animation: menuAppear 0.3s ease forwards;
+  border: none;
+}
+
+.navbar-user-menu::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  right: 20px;
+  width: 16px;
+  height: 16px;
+  background-color: white;
+  transform: rotate(45deg);
+}
+
+@keyframes menuAppear {
+  0% {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 
 .navbar-user-menu ul {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 5px 0;
+  position: relative;
 }
 
 .navbar-user-menu li {
   display: flex;
   align-items: center;
-  padding: 0.5rem 1rem;
+  padding: 12px 15px;
   cursor: pointer;
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
 }
 
 .navbar-user-menu li:hover {
-  background-color: #f0f0f0;
+  background-color: #f5f7fa;
+  border-left: 3px solid #3498db;
+}
+
+.navbar-user-menu li + li {
+  border-top: 1px solid #f0f0f0;
+}
+
+.navbar-user-menu .menu-text {
+  margin-left: 10px;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.navbar-user-menu svg {
+  opacity: 0.8;
+  transition: all 0.2s ease;
+}
+
+.navbar-user-menu li:hover svg {
+  opacity: 1;
+}
+
+.confirm-dialog-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+  animation: fadeIn 0.2s ease;
+}
+
+.confirm-dialog {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  animation: dialogAppear 0.3s ease;
+}
+
+.confirm-dialog h3 {
+  margin-top: 0;
+  color: #2c3e50;
+  font-size: 1.2rem;
+}
+
+.confirm-dialog p {
+  margin-bottom: 20px;
+  color: #555;
+}
+
+.confirm-dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.btn-cancel {
+  background-color: #e0e0e0;
+  color: #555;
+}
+
+.btn-confirm {
+  background-color: #e74c3c;
+  color: white;
+}
+
+.btn-cancel:hover {
+  background-color: #d0d0d0;
+}
+
+.btn-confirm:hover {
+  background-color: #9c1000;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes dialogAppear {
+  from { 
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to { 
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
