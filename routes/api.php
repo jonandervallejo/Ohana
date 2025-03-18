@@ -20,4 +20,11 @@ Route::delete('/productos/{id}', [ProductoController::class, 'destroy']);
 Route::post('login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->get('user', [AuthController::class, 'user']);
 
-Route::post('/password/reset', [PasswordResetController::class, 'reset']);
+Route::post('password/email', [PasswordResetController::class, 'sendResetLinkEmail'])->name('password.email');
+Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.update');
+
+// Redirect to React frontend's NewPassword component with the token - use redirect()->away() for external URLs
+Route::get('password/reset/{token}', function($token) {
+    $email = request('email', '');
+    return redirect()->away("http://88.15.26.49:3000/new-password/{$token}?email={$email}");
+})->name('password.reset');

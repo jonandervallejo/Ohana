@@ -13,7 +13,7 @@ const ResetPassword = () => {
     setStatus({ type: '', message: '' });
 
     try {
-      const response = await fetch('http://88.15.26.49:8000/api/password/reset', {
+      const response = await fetch('http://88.15.26.49:8000/api/password/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ const ResetPassword = () => {
             <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
               <path d="M21 13v7a1 1 0 01-1 1H4a1 1 0 01-1-1v-7h2v6h14v-6h2zM9 14h6v3H9v-3zM19 7h-3V5a3 3 0 00-6 0v2H7c-.6 0-1 .4-1 1v8h2v-7h12v7h2V8c0-.6-.4-1-1-1zm-5 0h-4V5a2 2 0 114 0v2z"/>
             </svg>
-            <h1>TiendaRopa</h1>
+            <h1>Ohana</h1>
           </div>
           <h2>Restablecer Contraseña</h2>
           <p>Ingresa tu correo para recibir instrucciones</p>
@@ -99,7 +99,7 @@ const ResetPassword = () => {
         </div>
         
         <div className="reset-footer">
-          <p className="copyright">© 2025 TiendaRopa</p>
+          <p className="copyright">© 2025 Ohana</p>
         </div>
       </div>
     </div>

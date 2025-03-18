@@ -8,6 +8,7 @@ import Navbar from './components/comunes/Navbar';
 import VentasPage from './pages/Ventas';
 import InventarioPage from './pages/Inventario';
 import ResetPassword from './pages/ResetPassword';
+import NewPassword from './pages/NewPassword';
 import './App.css';
 
 // Componente de carga mejorado
@@ -31,7 +32,10 @@ const PrivateRoute = ({ element: Element, ...rest }) => {
 const AppContent = () => {
   const location = useLocation();
   const { loading } = useContext(AuthContext);
-  const showNavbarAndFooter = !['/login', '/reset-password'].includes(location.pathname);
+  // Add new-password to the routes that don't show navbar
+  const showNavbarAndFooter = !['/login', '/reset-password', '/password/reset', '/new-password'].some(path => 
+    location.pathname.startsWith(path)
+  );
 
   return (
     <>
@@ -44,6 +48,9 @@ const AppContent = () => {
           <Route path="/ventas" element={<PrivateRoute element={VentasPage} />} />
           <Route path="/inventario" element={<PrivateRoute element={InventarioPage} />} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/password/reset" element={<ResetPassword />} />
+          {/* Change this route to match the Laravel redirect URL */}
+          <Route path="/new-password/:token" element={<NewPassword />} />
           <Route path="*" element={loading ? <LoadingSpinner /> : <Navigate to="/login" />} />
         </Routes>
       </div>

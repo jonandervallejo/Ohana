@@ -27,4 +27,31 @@ class PasswordResetController extends Controller
             return response()->json(['message' => 'No se pudo enviar el correo de restablecimiento.'], 500);
         }
     }
+
+    public function reset(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email',
+            'password' => 'required|confirmed|min:8',
+            'token' => 'required'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['message' => 'Datos inválidos.'], 422);
+        }
+
+        $response = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) {
+                $user->password = bcrypt($password);
+                $user->save();
+            }
+        );
+
+        if ($response == Password::PASSWORD_RESET) {
+            return response()->json(['message' => 'La contraseña ha sido restablecida.']);
+        } else {
+            return response()->json(['message' => 'No se pudo restablecer la contraseña.'], 500);
+        }
+    }
 }
