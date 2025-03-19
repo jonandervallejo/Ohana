@@ -4,6 +4,7 @@ import DetalleProductoModal from './DetalleProductoModal';
 import EditarProductoModal from './EditarProductoModal';
 import ConfirmacionModal from '../ui/CofirmacionModal';
 import Toast from '../ui/Toast';
+import { actualizarProducto, eliminarProducto } from '../../services/productoService';
 
 const API_BASE_URL = 'http://88.15.26.49:8000';
 
@@ -26,24 +27,9 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
     setMostrarConfirmacion(true);
   };
   
-  const eliminarProducto = async () => {
+  const eliminarProductoHandler = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/productos/${producto.id}`, {
-        method: 'DELETE',
-        headers: {
-          'Accept': 'application/json',
-          'Content-Type': 'application/json',
-          // Si usas autenticación, añade aquí el token
-          //
-          //  'Authorization': 'Bearer ' + localStorage.getItem('token')
-          //
-        }
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Error al eliminar el producto');
-      }
+      await eliminarProducto(producto.id);
       
       setMensajeToast('Producto eliminado correctamente');
       setTipoToast('success');
@@ -70,25 +56,9 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
     setMostrarDetalles(true);
   };
   
-  const actualizarProducto = async (datosActualizados) => {
+  const actualizarProductoHandler = async (datosActualizados) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/productos/${producto.id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          // Si usas autenticación, añade aquí el token
-          // 'Authorization': 'Bearer ' + localStorage.getItem('token')
-        },
-        body: JSON.stringify(datosActualizados)
-      });
-      
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Error al actualizar el producto');
-      }
-      
-      const productoActualizado = await response.json();
+      const productoActualizado = await actualizarProducto(producto.id, datosActualizados);
       
       setProductoActual(productoActualizado.data || productoActualizado);
       
@@ -191,14 +161,14 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
           producto={productoMostrado}
           getImageUrl={getImageUrl}
           onClose={() => setMostrarEdicion(false)}
-          onSave={actualizarProducto}
+          onSave={actualizarProductoHandler}
         />
       )}
       
       {mostrarConfirmacion && (
         <ConfirmacionModal 
           mensaje={`¿Estás seguro de eliminar el producto "${producto.nombre}"?`}
-          onConfirm={eliminarProducto}
+          onConfirm={eliminarProductoHandler}
           onCancel={() => setMostrarConfirmacion(false)}
         />
       )}

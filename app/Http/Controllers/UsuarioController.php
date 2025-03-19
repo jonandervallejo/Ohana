@@ -22,4 +22,10 @@ class UsuarioController extends Controller
             return response()->json(['message' => 'Usuario no encontrado'], 404);
         }
     }
+
+    public function contarClientes()
+    {
+        $clientesCount = Usuario::where('id_rol', 3)->count();
+        return response()->json(['total_clientes' => $clientesCount]);
+    }
 }
