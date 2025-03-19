@@ -172,4 +172,14 @@ class ProductoController extends Controller
 
         return response()->json(['message' => 'Producto eliminado correctamente']);
     }
+
+     /**
+     * Obtener el total de productos
+     */
+    public function getTotalProductos()
+    {
+        $totalProductos = Producto::count();
+        return response()->json(['totalProductos' => $totalProductos]);
+    }
 }
+

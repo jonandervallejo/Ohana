@@ -1,0 +1,153 @@
+.ajustes-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+  
+  .ajustes-title {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e9e9e9;
+  }
+  
+  .ajustes-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+  
+  @media (min-width: 768px) {
+    .ajustes-grid {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 3rem;
+    }
+  }
+  
+  .ajustes-panel {
+    background: #fff;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  }
+  
+  .ajustes-panel h2 {
+    font-size: 1.3rem;
+    color: #333;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #4a5568;
+  }
+  
+  .form-group small {
+    display: block;
+    margin-top: 0.3rem;
+    color: #718096;
+    font-size: 0.8rem;
+  }
+  
+  .form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 1rem;
+    transition: all 0.3s;
+  }
+  
+  .form-control:focus {
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    outline: none;
+  }
+  
+  .form-control[disabled] {
+    background-color: #f7fafc;
+    cursor: not-allowed;
+  }
+  
+  .password-container {
+    position: relative;
+  }
+  
+  .toggle-password {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #718096;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .toggle-password:hover {
+    color: #4a5568;
+  }
+  
+  .btn-save,
+  .btn-change-password {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+  }
+  
+  .btn-save {
+    background-color: #4299e1;
+    color: white;
+  }
+  
+  .btn-save:hover {
+    background-color: #3182ce;
+  }
+  
+  .btn-change-password {
+    background-color: #38b2ac;
+    color: white;
+  }
+  
+  .btn-change-password:hover {
+    background-color: #319795;
+  }
+  
+  button[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .alert {
+    padding: 0.75rem 1.25rem;
+    margin-bottom: 1.5rem;
+    border-radius: 6px;
+  }
+  
+  .alert-error {
+    background-color: #fed7d7;
+    color: #c53030;
+  }
+  
+  .alert-success {
+    background-color: #c6f6d5;
+    color: #2f855a;
+  }

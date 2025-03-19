@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Usuario;  // Importa el modelo Usuario
+use App\Mail\ResetPasswordMail; // Importa la clase Mailable
+use Illuminate\Support\Facades\Mail;
 
 class PasswordResetController extends Controller
 {
@@ -19,13 +22,19 @@ class PasswordResetController extends Controller
             return response()->json(['message' => 'El correo electrónico es requerido y debe ser válido.'], 422);
         }
 
-        $response = Password::sendResetLink($request->only('email'));
+        // Cambié 'User' por 'Usuario' para usar la tabla 'usuarios'
+        $user = Usuario::where('email', $request->email)->first();
 
-        if ($response == Password::RESET_LINK_SENT) {
-            return response()->json(['message' => 'Se ha enviado un correo con las instrucciones.']);
-        } else {
-            return response()->json(['message' => 'No se pudo enviar el correo de restablecimiento.'], 500);
+        if (!$user) {
+            return response()->json(['message' => 'No se encontró un usuario con ese correo.'], 404);
         }
+
+        $token = Password::getRepository()->create($user);
+
+        // Enviar correo personalizado
+        Mail::to($request->email)->send(new ResetPasswordMail($token, $request->email));
+
+        return response()->json(['message' => 'Se ha enviado un correo con las instrucciones.']);
     }
 
     public function reset(Request $request)

@@ -1,7 +1,18 @@
 import React from 'react';
+import useFetchData from '../hooks/useFetchData';
 import './css/Inicio.css';
 
 const Inicio = () => {
+  const { data, loading, error } = useFetchData('http://88.15.26.49:8000/api/productos/total');
+
+  if (loading) {
+    return <div>Cargando...</div>;
+  }
+
+  if (error) {
+    return <div>Error al cargar los datos</div>;
+  }
+
   return (
     <div className="inicio-page">
       <h1>Panel de Control</h1>
@@ -9,7 +20,7 @@ const Inicio = () => {
       <div className="dashboard-summary">
         <div className="summary-card">
           <h3>Total Productos</h3>
-          <p className="summary-value">120</p>
+          <p className="summary-value">{data.totalProductos}</p>
         </div>
         
         <div className="summary-card">

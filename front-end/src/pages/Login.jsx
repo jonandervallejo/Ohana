@@ -2,17 +2,22 @@ import React, { useState, useContext } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import './css/Login.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa'; 
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  
   const { login } = useContext(AuthContext);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
     
     try {
       const result = await login(email, password);
@@ -22,7 +27,9 @@ const LoginPage = () => {
         setError(result.message || 'Error al iniciar sesión');
       }
     } catch (error) {
-      setError('Error al conectar con el servidor');
+      setError('Error al conectar con el servidor. Inténtalo de nuevo.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -41,27 +48,25 @@ const LoginPage = () => {
         
         <form onSubmit={handleSubmit} className="login-form">
           {error && <div className="error-message">{error}</div>}
-          
           <div className="form-group">
             <label htmlFor="email">Correo Electrónico</label>
-            <div className="input-field">
-              <input
-                type="email"
-                id="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="ejemplo@empresa.com"
-                required
-              />
-            </div>
+            <input
+              type="email"
+              id="email"
+              className="form-control"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="ejemplo@empresa.com"
+              required
+              autoFocus
+            />
           </div>
           
           <div className="form-group">
             <label htmlFor="password">Contraseña</label>
-            <div className="input-field">
+            <div className="password-container">
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 id="password"
                 className="form-control"
                 value={password}
@@ -69,11 +74,18 @@ const LoginPage = () => {
                 placeholder="Ingresa tu contraseña"
                 required
               />
+              <button
+                type="button"
+                className="toggle-password"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <FaEyeSlash /> : <FaEye />}
+              </button>
             </div>
           </div>
           
-          <button type="submit" className="btn-login">
-            Iniciar Sesión
+          <button type="submit" className="btn-login" disabled={isLoading}>
+            {isLoading ? 'Cargando...' : 'Iniciar Sesión'}
           </button>
           
           <Link to="/reset-password" className="reset-password-link">
