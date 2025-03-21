@@ -10,6 +10,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ActividadController;
 use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\CompraController;
+use App\Http\Controllers\CategoriaController;
+
 
 // Rutas públicas
 Route::get('/usuarios', [UsuarioController::class, 'index']);
@@ -52,3 +54,4 @@ Route::middleware('auth:sanctum')->group(function () {
 Route::get('/actividad-reciente', [ActividadController::class, 'actividadReciente']);
 Route::get('/estadisticas/ventas-hoy', [EstadisticaController::class, 'ventasHoy']);
 Route::get('/pedidos-pendientes', [CompraController::class, 'obtenerPedidosPendientes']);
+Route::get('/categorias', [CategoriaController::class, 'index']);

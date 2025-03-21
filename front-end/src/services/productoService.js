@@ -51,11 +51,10 @@ export const crearProducto = async (datosProducto) => {
     const response = await fetch(`${API_URL}/productos`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
         'Authorization': `Bearer ${token}`
+        // Don't set Content-Type here as FormData automatically sets it
       },
-      body: JSON.stringify(datosProducto)
+      body: datosProducto // This is FormData
     });
     
     if (!response.ok) {

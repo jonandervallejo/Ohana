@@ -59,16 +59,204 @@
     gap: 10px;
     box-shadow: var(--shadow);
   }
-  
-  .btn-primary:hover {
-    background-color: var(--primary-dark);
-    box-shadow: var(--shadow-lg);
-    transform: translateY(-2px);
+  .btn-nuevo {
+  background: linear-gradient(135deg, #4a6fa5 0%, #304c70 100%);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 20px rgba(48, 76, 112, 0.2), 0 6px 6px rgba(48, 76, 112, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  letter-spacing: 0.3px;
+}
+
+.btn-nuevo:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 14px 24px rgba(48, 76, 112, 0.25), 0 10px 10px rgba(48, 76, 112, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  background: linear-gradient(135deg, #5a80b6 0%, #3a5c80 100%);
+}
+
+.btn-nuevo:active {
+  transform: translateY(1px) scale(0.98);
+  box-shadow: 0 6px 10px rgba(48, 76, 112, 0.15), 0 3px 6px rgba(48, 76, 112, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  background: linear-gradient(135deg, #3a5c80 0%, #304c70 100%);
+}
+
+/* Contenedor del ícono con diseño moderno */
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-nuevo:hover .icon-container {
+  background-color: rgba(255, 255, 255, 0.25);
+  transform: rotate(90deg);
+}
+
+.icon-plus {
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+}
+
+.btn-nuevo {
+  background: linear-gradient(135deg, #4a6fa5 0%, #304c70 100%);
+  color: white;
+  border: none;
+  padding: 14px 28px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  box-shadow: 0 10px 20px rgba(48, 76, 112, 0.2), 0 6px 6px rgba(48, 76, 112, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  position: relative;
+  overflow: hidden;
+  text-decoration: none;
+  letter-spacing: 0.3px;
+}
+
+.btn-nuevo:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 24px rgba(48, 76, 112, 0.25), 0 10px 10px rgba(48, 76, 112, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  background: linear-gradient(135deg, #5a80b6 0%, #3a5c80 100%);
+}
+
+.btn-nuevo:active {
+  transform: translateY(1px);
+  box-shadow: 0 6px 10px rgba(48, 76, 112, 0.15), 0 3px 6px rgba(48, 76, 112, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  background: linear-gradient(135deg, #3a5c80 0%, #304c70 100%);
+}
+
+/* Contenedor del ícono con diseño moderno - sin rotación */
+.icon-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.18);
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Reemplazamos la rotación por un efecto de brillo */
+.btn-nuevo:hover .icon-container {
+  background-color: rgba(255, 255, 255, 0.25);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+/* Añadimos un pequeño efecto de escala al símbolo + */
+.icon-plus {
+  font-size: 18px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  transition: transform 0.2s ease;
+}
+
+.btn-nuevo:hover .icon-plus {
+  transform: scale(1.1);
+}
+
+/* Efectos de animación para el botón */
+.btn-nuevo::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  transition: all 0.5s ease;
+}
+
+.btn-nuevo:hover::before {
+  left: 100%;
+}
+
+/* Mejoramos el efecto de pulso en el botón */
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(74, 111, 165, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(74, 111, 165, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(74, 111, 165, 0);
+  }
+}
+
+.btn-nuevo:focus {
+  animation: pulse 1.5s infinite;
+}
+
+/* Texto del botón con mejor estilo */
+.btn-nuevo span {
+  position: relative;
+  z-index: 1;
+  font-weight: 600;
+  font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* Añadimos un pequeño efecto de escala al texto */
+.btn-nuevo:hover span {
+  transform: scale(1.02);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .btn-nuevo {
+    padding: 12px 22px;
   }
   
-  .btn-nuevo i {
-    font-size: 15px;
+  .icon-container {
+    width: 28px;
+    height: 28px;
   }
+}
+
+@media (max-width: 480px) {
+  .btn-nuevo {
+    width: 100%;
+    justify-content: center;
+    margin-top: 15px;
+    padding: 14px 20px;
+  }
+}
   
   /* Tarjetas de estadísticas con diseño de dashboard profesional */
   .dashboard-stats {
@@ -338,5 +526,58 @@
     
     .stat-value {
       font-size: 24px;
+    }
+  }
+
+  .toast-mensaje {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 12px 20px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    min-width: 300px;
+    max-width: 400px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    z-index: 1000;
+    animation: fadeIn 0.3s forwards;
+  }
+  
+  .toast-mensaje.success {
+    background-color: #d4edda;
+    color: #155724;
+    border-left: 5px solid #28a745;
+  }
+  
+  .toast-mensaje.error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border-left: 5px solid #dc3545;
+  }
+  
+  .toast-mensaje button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    margin-left: 15px;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.7;
+  }
+  
+  .toast-mensaje button:hover {
+    opacity: 1;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }

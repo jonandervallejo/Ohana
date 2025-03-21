@@ -82,12 +82,26 @@ const DetalleProductoModal = ({ producto, getImageUrl, onClose }) => {
                     </span>
                   </div>
                 )}
+                {producto.stocks && producto.stocks.length > 0 && (
+                    <div className="detalle-stock-section">
+                      <h4 className="stock-title">Inventario disponible</h4>
+                      <div className="stock-grid">
+                        {producto.stocks.map((item, index) => (
+                          <div key={index} className="stock-item">
+                            <span className="stock-color">{item.color}</span>
+                            <span className="stock-talla">{item.talla}</span>
+                            <span className="stock-cantidad">{item.stock} unidades</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
   );
 };
 

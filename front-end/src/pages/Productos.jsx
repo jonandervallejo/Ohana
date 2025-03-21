@@ -1,7 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { obtenerProductos, obtenerProductosPorCategoria } from '../services/productoService';
+import { Link } from 'react-router-dom';
+import axios from 'axios';
 import TarjetaProducto from '../components/productos/TarjetaProducto';
 import './css/Productos.css';
+
+const API_URL = 'http://88.15.26.49:8000/api';
 
 const ProductosPage = () => {
   const [productos, setProductos] = useState([]);
@@ -20,17 +23,17 @@ const ProductosPage = () => {
         let data;
         
         if (categoriaSeleccionada) {
-          data = await obtenerProductosPorCategoria(categoriaSeleccionada);
+          data = await axios.get(`${API_URL}/productos/categoria/${categoriaSeleccionada}`);
         } else {
-          data = await obtenerProductos();
+          data = await axios.get(`${API_URL}/productos`);
         }
         
-        setProductos(data);
-        setProductosFiltrados(data);
+        setProductos(data.data);
+        setProductosFiltrados(data.data);
         
         if (!categoriaSeleccionada) {
           const categoriasUnicas = {};
-          data.forEach(producto => {
+          data.data.forEach(producto => {
             if (producto.categoria && !categoriasUnicas[producto.categoria.id]) {
               categoriasUnicas[producto.categoria.id] = producto.categoria;
             }
@@ -49,6 +52,20 @@ const ProductosPage = () => {
     cargarProductos();
   }, [categoriaSeleccionada]);
   
+  useEffect(() => {
+    const fetchCategorias = async () => {
+      try {
+        const response = await axios.get(`${API_URL}/categorias`);
+        setCategorias(response.data);
+      } catch (error) {
+        console.error('Error al cargar categorías:', error);
+        setError('No se pudieron cargar las categorías. Por favor, intenta de nuevo.');
+      }
+    };
+
+    fetchCategorias();
+  }, []);
+
   useEffect(() => {
     if (busqueda.trim() === '') {
       setProductosFiltrados(productos);
@@ -72,10 +89,6 @@ const ProductosPage = () => {
     setMostrarCategorias(false);
   };
   
-  const handleNuevoProducto = () => {
-    alert('Funcionalidad para añadir nuevo producto');
-  };
-  
   const toggleCategorias = () => {
     setMostrarCategorias(!mostrarCategorias);
   };
@@ -94,9 +107,12 @@ const ProductosPage = () => {
     <div className="productos-page">
       <div className="productos-header">
         <h1>Gestión de Productos</h1>
-        <button className="btn-primary btn-nuevo" onClick={handleNuevoProducto}>
-          <i className="fas fa-plus"></i> Nuevo Producto
-        </button>
+        <Link to="/productos/crear" className="btn-nuevo" aria-label="Crear nuevo producto">
+          <div className="icon-container">
+            <span className="icon-plus">+</span>
+          </div>
+          <span>Nuevo Producto</span>
+        </Link>
       </div>
       
       <div className="dashboard-stats">

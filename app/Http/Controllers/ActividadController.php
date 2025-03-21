@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Ticket;
 use App\Models\Producto;
+use App\Models\Actividad;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -12,56 +13,103 @@ class ActividadController extends Controller
 {
     public function actividadReciente()
     {
-        $actividades = [];
-        
-        // Obtener últimas ventas desde tickets
-        $tickets = Ticket::orderBy('created_at', 'desc')
-                        ->take(10)
-                        ->get();
-        
-        foreach ($tickets as $ticket) {
-            $actividades[] = [
-                'tipo' => 'venta',
-                'descripcion' => "Nueva venta - €{$ticket->precio_total}",
-                'tiempo' => $ticket->created_at,
-                'timestamp' => $ticket->created_at->timestamp
-            ];
+        try {
+            // Establecer la zona horaria para España/Madrid
+            $zonaHoraria = 'Europe/Madrid';
+            Carbon::setLocale('es');
+            
+            $actividades = [];
+            
+            // Obtener últimas ventas desde tickets
+            $tickets = Ticket::orderBy('created_at', 'desc')
+                            ->take(6)
+                            ->get();
+            
+            foreach ($tickets as $ticket) {
+                if ($ticket->created_at) {
+                    // Convertir a la zona horaria local
+                    $fechaLocal = Carbon::parse($ticket->created_at)->setTimezone($zonaHoraria);
+                    
+                    $actividades[] = [
+                        'tipo' => 'venta',
+                        'descripcion' => "Nueva venta - €{$ticket->precio_total}",
+                        'tiempo_formateado' => $fechaLocal->format('H:i'),
+                        'fecha' => $fechaLocal->format('Y-m-d'),
+                        'timestamp' => $fechaLocal->timestamp
+                    ];
+                }
+            }
+            
+            // Obtener actividades recientes de productos
+            $productosActualizados = Producto::orderBy('updated_at', 'desc')
+                              ->whereNotNull('updated_at')
+                              ->take(6)
+                              ->get();
+                              
+            foreach ($productosActualizados as $producto) {
+                if ($producto->updated_at) {
+                    // Convertir a la zona horaria local
+                    $fechaLocal = Carbon::parse($producto->updated_at)->setTimezone($zonaHoraria);
+                    
+                    // Determinar si es una creación o actualización
+                    $esCreacion = $producto->created_at->eq($producto->updated_at);
+                    
+                    $actividades[] = [
+                        'tipo' => 'producto',
+                        'descripcion' => $esCreacion 
+                            ? "Nuevo producto: {$producto->nombre} - €{$producto->precio}" 
+                            : "Producto actualizado: {$producto->nombre}",
+                        'tiempo_formateado' => $fechaLocal->format('H:i'),
+                        'fecha' => $fechaLocal->format('Y-m-d'),
+                        'timestamp' => $fechaLocal->timestamp
+                    ];
+                }
+            }
+            
+            // Si tienes una tabla de actividades específica, también puedes obtenerlas
+            if (class_exists('App\Models\Actividad')) {
+                try {
+                    $actividadesRegistradas = Actividad::where('tipo', 'producto')
+                                          ->orWhere('tipo', 'stock')
+                                          ->orderBy('created_at', 'desc')
+                                          ->take(6)
+                                          ->get();
+                                          
+                    foreach ($actividadesRegistradas as $actividad) {
+                        if ($actividad->created_at) {
+                            // Convertir a la zona horaria local
+                            $fechaLocal = Carbon::parse($actividad->created_at)->setTimezone($zonaHoraria);
+                            
+                            $actividades[] = [
+                                'tipo' => $actividad->tipo,
+                                'descripcion' => $actividad->descripcion,
+                                'tiempo_formateado' => $fechaLocal->format('H:i'),
+                                'fecha' => $fechaLocal->format('Y-m-d'),
+                                'timestamp' => $fechaLocal->timestamp
+                            ];
+                        }
+                    }
+                } catch (\Exception $e) {
+                    \Log::warning('No se pudieron obtener actividades registradas: ' . $e->getMessage());
+                    // Continuar sin estas actividades
+                }
+            }
+            
+            // Ordenar todas las actividades por timestamp (más recientes primero)
+            usort($actividades, function($a, $b) {
+                return $b['timestamp'] - $a['timestamp'];
+            });
+            
+            // Limitar a un número razonable de actividades
+            $actividades = array_slice($actividades, 0, 5);
+            
+            return response()->json($actividades);
+        } catch (\Exception $e) {
+            // Log del error para depuración
+            \Log::error('Error en actividadReciente: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
+            
+            // Devolver un array vacío en caso de error
+            return response()->json([]);
         }
-        
-        // Para obtener actualizaciones como eventos individuales, necesitamos consultar
-        // la tabla de productos directamente y obtener todas las actualizaciones
-        $ultimasActualizaciones = DB::table('producto')
-                                    ->select('id', 'nombre', 'updated_at')
-                                    ->orderBy('updated_at', 'desc')
-                                    ->take(20)
-                                    ->get();
-        
-        foreach ($ultimasActualizaciones as $actualizacion) {
-            $actividades[] = [
-                'tipo' => 'producto',
-                'descripcion' => "Producto actualizado - {$actualizacion->nombre}",
-                'tiempo' => $actualizacion->updated_at,
-                'timestamp' => strtotime($actualizacion->updated_at)
-            ];
-        }
-        
-        // Ordenar todas las actividades por tiempo más reciente
-        usort($actividades, function($a, $b) {
-            return $b['timestamp'] - $a['timestamp'];
-        });
-        
-        // Tomar solo las 10 más recientes para mostrar más variedad
-        $actividades = array_slice($actividades, 0, 10);
-        
-        // Formatear la hora para la visualización
-        foreach ($actividades as &$actividad) {
-            $carbon = Carbon::parse($actividad['tiempo']);
-            $carbon->addHour(); // Añadir una hora
-            $actividad['tiempo_formateado'] = $carbon->format('H:i');
-            unset($actividad['timestamp']);
-            unset($actividad['tiempo']);
-        }
-        
-        return response()->json($actividades);
     }
 }

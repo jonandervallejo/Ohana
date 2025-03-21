@@ -1,7 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
 import { AuthContext } from '../../context/AuthContext';
-import './Navbar.css';
+import './css/Navbar.css';
 
 const userIcon = (
   <svg

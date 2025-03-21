@@ -56,3 +56,158 @@
   .btn-cancelar:hover {
     background-color: #cbd5e0;
   }
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10000;
+  padding: 15px;
+}
+
+.modal-content {
+  background-color: white;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+  animation: modalFadeIn 0.3s ease-out;
+}
+
+@keyframes modalFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.modal-header {
+  padding: 15px 20px;
+  border-bottom: 1px solid #e2e8f0;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.modal-header svg {
+  margin-right: 10px;
+  color: inherit;
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  flex: 1;
+}
+
+.btn-cerrar {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #718096;
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 5px;
+}
+
+.btn-cerrar:hover {
+  color: #2d3748;
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-body p {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+.modal-actions {
+  padding: 15px 20px;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+
+.btn-confirmar {
+  background-color: #4299e1;
+  color: white;
+}
+
+.btn-confirmar:hover {
+  background-color: #3182ce;
+}
+.btn-cancelar {
+  background-color: #e2e8f0;
+  color: #4a5568;
+}
+
+.btn-cancelar:hover {
+  background-color: #cbd5e0;
+}
+
+.btn-confirmar:active, .btn-eliminar:active, .btn-cancelar:active {
+  transform: scale(0.98);
+}
+
+.modal-warning .modal-header {
+  color: #856404;
+  background-color: #fff3cd;
+}
+
+.modal-danger .modal-header {
+  color: #721c24;
+  background-color: #f8d7da;
+}
+
+/* Estilos responsivos para móviles */
+@media (max-width: 576px) {
+  .modal-content {
+    width: 100%;
+    max-height: 80vh;
+  }
+  
+  .modal-header {
+    padding: 12px 15px;
+  }
+  
+  .modal-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .modal-body {
+    padding: 15px;
+  }
+  
+  .modal-actions {
+    padding: 12px 15px;
+    justify-content: space-between;
+    flex-wrap: wrap;
+  }
+  
+  .btn-confirmar, .btn-eliminar, .btn-cancelar {
+    padding: 10px 15px;
+    flex: 1;
+    text-align: center;
+    font-size: 0.95rem;
+  }
+  
+}

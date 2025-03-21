@@ -123,9 +123,15 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
                 e.target.onerror = null;
               }}
             />
-            {esGestion && <div className="badge-stock">Stock: 45</div>}
+            {esGestion && productoMostrado.stocks && (
+              <div className="badge-stock">
+                Stock: {productoMostrado.stocks.reduce((total, item) => total + item.stock, 0)}
+              </div>
+            )}
           </div>
         )}
+
+        
         
         <div className="info-producto">
           <h3>{productoMostrado.nombre}</h3>

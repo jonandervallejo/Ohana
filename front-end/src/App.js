@@ -1,18 +1,19 @@
-import React, { useContext } from 'react';
+   import React, { useContext } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/Login';
 import ProductosPage from './pages/Productos';
+import CrearProductoPage from './pages/CrearProducto';
 import Inicio from './pages/Inicio';
 import VentasPage from './pages/Ventas';
 import InventarioPage from './pages/Inventario';
 import ResetPassword from './pages/ResetPassword';
 import NewPassword from './pages/NewPassword';
 import './App.css';
-import Footer from './components/comunes/Footer'; // Importar el nuevo footer
+import Footer from './components/comunes/Footer';
 import Ajustes from './pages/Ajustes';
-import ScrollToTop from './components/comunes/ScrollToTop'; // Importar componente
+import ScrollToTop from './components/comunes/ScrollToTop';
 
 const LoadingSpinner = () => (
   <div className="loading-container">
@@ -45,6 +46,7 @@ const AppContent = () => {
 
   const InicioWithLayout = withLayout(Inicio);
   const ProductosWithLayout = withLayout(ProductosPage);
+  const CrearProductoWithLayout = withLayout(CrearProductoPage);
   const VentasWithLayout = withLayout(VentasPage);
   const InventarioWithLayout = withLayout(InventarioPage);
   const AjustesWithLayout = withLayout(Ajustes);
@@ -56,6 +58,7 @@ const AppContent = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<InicioWithLayout />} />
         <Route path="/productos" element={<ProductosWithLayout />} />
+        <Route path="/productos/crear" element={<CrearProductoWithLayout />} />
         <Route path="/ventas" element={<VentasWithLayout />} />
         <Route path="/inventario" element={<InventarioWithLayout />} />
         <Route path="/ajustes" element={<AjustesWithLayout />} />
@@ -65,7 +68,7 @@ const AppContent = () => {
         <Route path="*" element={loading ? <LoadingSpinner /> : <Navigate to="/login" />} />
       </Routes>
       
-      {!isPublicRoute && <Footer />} {/* Reemplazar el footer antiguo */}
+      {!isPublicRoute && <Footer />}
     </>
   );
 };
