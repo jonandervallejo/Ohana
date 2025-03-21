@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
+import ReactPaginate from 'react-paginate';
+import { obtenerProductos, obtenerProductosPorCategoria } from '../services/productoService';
 import TarjetaProducto from '../components/productos/TarjetaProducto';
 import './css/Productos.css';
 
@@ -15,31 +17,28 @@ const ProductosPage = () => {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
+  const [paginaActual, setPaginaActual] = useState(0);
+  const [totalPaginas, setTotalPaginas] = useState(1);
+  const [filtroStock, setFiltroStock] = useState(false); // Estado para el filtro de stock
 
   useEffect(() => {
     const cargarProductos = async () => {
       try {
         setCargando(true);
-        let data;
+        let response;
         
         if (categoriaSeleccionada) {
-          data = await axios.get(`${API_URL}/productos/categoria/${categoriaSeleccionada}`);
+          response = await obtenerProductosPorCategoria(categoriaSeleccionada, paginaActual + 1, 6);
         } else {
-          data = await axios.get(`${API_URL}/productos`);
+          response = await obtenerProductos(paginaActual + 1, 6);
         }
         
-        setProductos(data.data);
-        setProductosFiltrados(data.data);
-        
-        if (!categoriaSeleccionada) {
-          const categoriasUnicas = {};
-          data.data.forEach(producto => {
-            if (producto.categoria && !categoriasUnicas[producto.categoria.id]) {
-              categoriasUnicas[producto.categoria.id] = producto.categoria;
-            }
-          });
-          
-          setCategorias(Object.values(categoriasUnicas));
+        if (response && response.data) {
+          setProductos(response.data);
+          setTotalPaginas(response.last_page);
+        } else {
+          setProductos([]);
+          setTotalPaginas(1);
         }
       } catch (err) {
         setError('Error al cargar los productos');
@@ -50,8 +49,8 @@ const ProductosPage = () => {
     };
 
     cargarProductos();
-  }, [categoriaSeleccionada]);
-  
+  }, [categoriaSeleccionada, paginaActual]);
+
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
@@ -67,26 +66,34 @@ const ProductosPage = () => {
   }, []);
 
   useEffect(() => {
-    if (busqueda.trim() === '') {
-      setProductosFiltrados(productos);
-    } else {
-      const resultados = productos.filter(producto => 
+    let resultados = productos;
+
+    if (busqueda.trim() !== '') {
+      resultados = resultados.filter(producto => 
         producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
         producto.descripcion.toLowerCase().includes(busqueda.toLowerCase())
       );
-      setProductosFiltrados(resultados);
     }
-  }, [busqueda, productos]);
+
+    if (filtroStock) {
+      resultados = resultados.filter(producto => producto.stock > 0);
+    }
+
+    setProductosFiltrados(resultados);
+  }, [busqueda, productos, filtroStock]);
 
   const filtrarPorCategoria = (idCategoria) => {
     setCategoriaSeleccionada(idCategoria);
+    setPaginaActual(0); // Resetear a la primera página al cambiar de categoría
     setMostrarCategorias(false);
   };
 
   const limpiarFiltros = () => {
     setCategoriaSeleccionada(null);
     setBusqueda('');
+    setPaginaActual(0); // Resetear a la primera página al limpiar filtros
     setMostrarCategorias(false);
+    setFiltroStock(false); // Resetear el filtro de stock
   };
   
   const toggleCategorias = () => {
@@ -101,6 +108,10 @@ const ProductosPage = () => {
 
   const handleProductoEliminado = (productoId) => {
     setProductos(productos.filter(p => p.id !== productoId));
+  };
+
+  const handlePageClick = (data) => {
+    setPaginaActual(data.selected);
   };
 
   return (
@@ -198,6 +209,22 @@ const ProductosPage = () => {
           ))}
         </div>
       )}
+
+      <div className="productos-pagination">
+        <ReactPaginate
+          previousLabel={'Anterior'}
+          nextLabel={'Siguiente'}
+          breakLabel={'...'}
+          breakClassName={'break-me'}
+          pageCount={totalPaginas}
+          marginPagesDisplayed={2}
+          pageRangeDisplayed={5}
+          onPageChange={handlePageClick}
+          containerClassName={'pagination'}
+          subContainerClassName={'pages pagination'}
+          activeClassName={'active'}
+        />
+      </div>
     </div>
   );
 };

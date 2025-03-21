@@ -1,16 +1,16 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './css/TarjetaProducto.css';
 import DetalleProductoModal from './DetalleProductoModal';
-import EditarProductoModal from './EditarProductoModal';
 import ConfirmacionModal from '../ui/CofirmacionModal';
 import Toast from '../ui/Toast';
-import { actualizarProducto, eliminarProducto } from '../../services/productoService';
+import { eliminarProducto } from '../../services/productoService';
 
 const API_BASE_URL = 'http://88.15.26.49:8000';
 
 const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, onProductoEliminado }) => {
+  const navigate = useNavigate();
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
-  const [mostrarEdicion, setMostrarEdicion] = useState(false);
   const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [mostrarToast, setMostrarToast] = useState(false);
   const [mensajeToast, setMensajeToast] = useState('');
@@ -20,7 +20,7 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
   const tarjetaRef = useRef(null);
   
   const handleEditar = () => {
-    setMostrarEdicion(true);
+    navigate(`/productos/editar/${producto.id}`);
   };
   
   const handleEliminar = () => {
@@ -54,31 +54,6 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
 
   const handleVerDetalles = () => {
     setMostrarDetalles(true);
-  };
-  
-  const actualizarProductoHandler = async (datosActualizados) => {
-    try {
-      const productoActualizado = await actualizarProducto(producto.id, datosActualizados);
-      
-      setProductoActual(productoActualizado.data || productoActualizado);
-      
-      setMensajeToast('¡Producto actualizado con éxito!');
-      setTipoToast('success');
-      setMostrarToast(true);
-      
-      if (onProductoActualizado) {
-        onProductoActualizado(productoActualizado.data || productoActualizado);
-      }
-      
-      setMostrarEdicion(false);
-      
-    } catch (error) {
-      console.error('Error al actualizar producto:', error);
-      
-      setMensajeToast('Error al actualizar: ' + error.message);
-      setTipoToast('error');
-      setMostrarToast(true);
-    }
   };
 
   if (!producto) {
@@ -161,15 +136,6 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
           />
         )}
       </div>
-
-      {mostrarEdicion && (
-        <EditarProductoModal 
-          producto={productoMostrado}
-          getImageUrl={getImageUrl}
-          onClose={() => setMostrarEdicion(false)}
-          onSave={actualizarProductoHandler}
-        />
-      )}
       
       {mostrarConfirmacion && (
         <ConfirmacionModal 

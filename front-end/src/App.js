@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'r
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Layout from './components/layout/Layout';
 import LoginPage from './pages/Login';
+import '@fortawesome/fontawesome-free/css/all.min.css';
 import ProductosPage from './pages/Productos';
 import CrearProductoPage from './pages/CrearProducto';
 import Inicio from './pages/Inicio';
@@ -14,6 +15,7 @@ import './App.css';
 import Footer from './components/comunes/Footer';
 import Ajustes from './pages/Ajustes';
 import ScrollToTop from './components/comunes/ScrollToTop';
+import EditarProducto from './pages/EditarProducto';
 
 const LoadingSpinner = () => (
   <div className="loading-container">
@@ -58,6 +60,7 @@ const AppContent = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<InicioWithLayout />} />
         <Route path="/productos" element={<ProductosWithLayout />} />
+        <Route path="/productos/editar/:id" element={<EditarProducto />} />
         <Route path="/productos/crear" element={<CrearProductoWithLayout />} />
         <Route path="/ventas" element={<VentasWithLayout />} />
         <Route path="/inventario" element={<InventarioWithLayout />} />

@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 const API_URL = 'http://88.15.26.49:8000/api';
 
 // Función para obtener el token de autenticación
@@ -5,15 +7,26 @@ const getAuthToken = () => {
   return localStorage.getItem('token');
 };
 
-export const obtenerProductos = async () => {
+export const obtenerProductos = async (page = 1, limit = 6) => {
   try {
-    const response = await fetch(`${API_URL}/productos`);
-    if (!response.ok) {
-      throw new Error('Error al obtener productos');
-    }
-    return await response.json();
+    const response = await axios.get(`${API_URL}/productos`, {
+      params: { page, limit }
+    });
+    return response.data;
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error al obtener productos:', error);
+    throw error;
+  }
+};
+
+export const obtenerProductosPorCategoria = async (categoriaId, page = 1, limit = 6) => {
+  try {
+    const response = await axios.get(`${API_URL}/productos/categoria/${categoriaId}`, {
+      params: { page, limit }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener productos por categoría:', error);
     throw error;
   }
 };
@@ -23,19 +36,6 @@ export const obtenerProductoPorId = async (id) => {
     const response = await fetch(`${API_URL}/productos/${id}`);
     if (!response.ok) {
       throw new Error('Error al obtener el producto');
-    }
-    return await response.json();
-  } catch (error) {
-    console.error('Error:', error);
-    throw error;
-  }
-};
-
-export const obtenerProductosPorCategoria = async (idCategoria) => {
-  try {
-    const response = await fetch(`${API_URL}/productos/categoria/${idCategoria}`);
-    if (!response.ok) {
-      throw new Error('Error al obtener productos por categoría');
     }
     return await response.json();
   } catch (error) {
@@ -116,6 +116,17 @@ export const eliminarProducto = async (id) => {
     return await response.json();
   } catch (error) {
     console.error('Error:', error);
+    throw error;
+  }
+};
+
+// Nueva función para obtener productos con stock
+export const obtenerProductosConStock = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/productos-con-stock`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener productos con stock:', error);
     throw error;
   }
 };

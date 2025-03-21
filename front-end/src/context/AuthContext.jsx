@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect, useRef } from 'react';
 const AuthContext = createContext();
 
 // Constantes para tiempos de expiración (en milisegundos)
-const FILE_SELECTION_EXPIRY = 1200; // 2 minutos
+const FILE_SELECTION_EXPIRY = 6000; // 2 minutos
 const TOKEN_CHECK_DELAY = 5000; // 5 segundos
 
 export const AuthProvider = ({ children }) => {

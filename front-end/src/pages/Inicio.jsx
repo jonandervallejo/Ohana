@@ -8,6 +8,7 @@ import './css/Inicio.css';
 
 const Inicio = () => {
   const [productos, setProductos] = useState([]);
+  const [totalProductos, setTotalProductos] = useState(0);
   const [totalClientes, setTotalClientes] = useState(0);
   const [ventasHoy, setVentasHoy] = useState(0);
   const [actividades, setActividades] = useState([]);
@@ -24,8 +25,10 @@ const Inicio = () => {
         // Cargamos los datos por separado para que un error no afecte al otro
         let productosData = [];
         try {
-          productosData = await obtenerProductos();
+          const response = await obtenerProductos(1, 6); // Página 1, 6 productos por página
+          productosData = response.data;
           setProductos(productosData);
+          setTotalProductos(response.total); // Total de productos
         } catch (err) {
           console.error('Error al cargar productos:', err);
         }
@@ -87,7 +90,7 @@ const Inicio = () => {
       <div className="dashboard-summary">
         <div className="summary-card">
           <h3>Total Productos</h3>
-          <p className="summary-value">{cargando ? 'Cargando...' : error ? 'Error' : productos.length}</p>
+          <p className="summary-value">{cargando ? 'Cargando...' : error ? 'Error' : totalProductos}</p>
         </div>
         
         <div className="summary-card">

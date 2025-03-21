@@ -1,5 +1,7 @@
 .inicio-page {
   padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .dashboard-summary {
@@ -15,6 +17,10 @@
   padding: 1.5rem;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
   text-align: center;
+  height: 130px; /* Altura fija para todas las tarjetas */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .summary-card h3 {
@@ -88,4 +94,51 @@
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 1rem;
+}
+
+/* Media queries para dispositivos móviles */
+@media (max-width: 768px) {
+  .inicio-page {
+    padding: 1rem;
+  }
+
+  .dashboard-summary {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+  
+  .summary-card {
+    max-width: 100%;
+    margin: 0 auto;
+    width: 90%; /* Ancho fijo en móvil */
+    height: 120px; /* Altura ligeramente menor en móvil */
+  }
+  
+  h1 {
+    text-align: center;
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* Para tablets */
+@media (min-width: 769px) and (max-width: 1023px) {
+  .dashboard-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .summary-card {
+    width: 100%; /* Ancho completo dentro de su columna de grid */
+  }
+}
+
+/* Para asegurar tamaños uniformes en pantallas más grandes */
+@media (min-width: 1024px) {
+  .dashboard-summary {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .summary-card {
+    width: 100%;
+  }
 }

@@ -55,3 +55,4 @@ Route::get('/actividad-reciente', [ActividadController::class, 'actividadRecient
 Route::get('/estadisticas/ventas-hoy', [EstadisticaController::class, 'ventasHoy']);
 Route::get('/pedidos-pendientes', [CompraController::class, 'obtenerPedidosPendientes']);
 Route::get('/categorias', [CategoriaController::class, 'index']);
+Route::get('/productos-con-stock', [ProductoController::class, 'obtenerProductosConStock']);
