@@ -19,6 +19,16 @@ export const obtenerProductos = async (page = 1, limit = 6) => {
   }
 };
 
+export const obtenerTodosLosProductos = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/productos`);
+    return Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error('Error al obtener todos los productos:', error);
+    throw error;
+  }
+};
+
 export const obtenerProductosPorCategoria = async (categoriaId, page = 1, limit = 6) => {
   try {
     const response = await axios.get(`${API_URL}/productos/categoria/${categoriaId}`, {
@@ -120,13 +130,32 @@ export const eliminarProducto = async (id) => {
   }
 };
 
-// Nueva función para obtener productos con stock
 export const obtenerProductosConStock = async () => {
   try {
-    const response = await axios.get(`${API_URL}/productos-con-stock`);
+    const response = await axios.get(`${API_URL}/stock`);
     return response.data;
   } catch (error) {
     console.error('Error al obtener productos con stock:', error);
+    throw error;
+  }
+};
+
+export const obtenerInventarios = async () => {
+  try {
+    const response = await axios.get(`${API_URL}/inventarios`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener inventarios:', error);
+    throw error;
+  }
+};
+
+export const actualizarInventario = async (id, inventario) => {
+  try {
+    const response = await axios.put(`${API_URL}/inventarios/${id}`, inventario);
+    return response.data;
+  } catch (error) {
+    console.error('Error al actualizar inventario:', error);
     throw error;
   }
 };

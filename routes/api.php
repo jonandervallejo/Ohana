@@ -11,6 +11,7 @@ use App\Http\Controllers\ActividadController;
 use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CategoriaController;
+use App\Http\Controllers\StockController;
 
 
 // Rutas públicas
@@ -56,3 +57,8 @@ Route::get('/estadisticas/ventas-hoy', [EstadisticaController::class, 'ventasHoy
 Route::get('/pedidos-pendientes', [CompraController::class, 'obtenerPedidosPendientes']);
 Route::get('/categorias', [CategoriaController::class, 'index']);
 Route::get('/productos-con-stock', [ProductoController::class, 'obtenerProductosConStock']);
+
+Route::get('/stock', [StockController::class, 'obtenerStock']);
+Route::post('/stock', [StockController::class, 'agregarStock']);
+Route::get('/inventarios', [StockController::class, 'obtenerInventarios']);
+Route::put('/inventarios/{id}', [StockController::class, 'actualizarInventario']);
