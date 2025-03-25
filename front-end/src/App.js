@@ -1,4 +1,4 @@
-   import React, { useContext } from 'react';
+import React, { useContext } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, AuthContext } from './context/AuthContext';
 import Layout from './components/layout/Layout';
@@ -9,6 +9,8 @@ import CrearProductoPage from './pages/CrearProducto';
 import Inicio from './pages/Inicio';
 import VentasPage from './pages/Ventas';
 import InventarioPage from './pages/Inventario';
+import EditarInventarioPage from './pages/EditarInventario';
+import CrearInventarioPage from './pages/CrearInventario';
 import ResetPassword from './pages/ResetPassword';
 import NewPassword from './pages/NewPassword';
 import './App.css';
@@ -49,8 +51,11 @@ const AppContent = () => {
   const InicioWithLayout = withLayout(Inicio);
   const ProductosWithLayout = withLayout(ProductosPage);
   const CrearProductoWithLayout = withLayout(CrearProductoPage);
+  const EditarProductoWithLayout = withLayout(EditarProducto);
   const VentasWithLayout = withLayout(VentasPage);
   const InventarioWithLayout = withLayout(InventarioPage);
+  const CrearInventarioWithLayout = withLayout(CrearInventarioPage);
+  const EditarInventarioWithLayout = withLayout(EditarInventarioPage);
   const AjustesWithLayout = withLayout(Ajustes);
 
   return (
@@ -60,10 +65,12 @@ const AppContent = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<InicioWithLayout />} />
         <Route path="/productos" element={<ProductosWithLayout />} />
-        <Route path="/productos/editar/:id" element={<EditarProducto />} />
+        <Route path="/productos/editar/:id" element={<EditarProductoWithLayout />} />
         <Route path="/productos/crear" element={<CrearProductoWithLayout />} />
         <Route path="/ventas" element={<VentasWithLayout />} />
         <Route path="/inventario" element={<InventarioWithLayout />} />
+        <Route path="/crear-inventario" element={<CrearInventarioWithLayout />} />
+        <Route path="/editar-inventario/:id" element={<EditarInventarioWithLayout />} />
         <Route path="/ajustes" element={<AjustesWithLayout />} />
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/password/reset" element={<ResetPassword />} />

@@ -12,6 +12,7 @@ use App\Http\Controllers\EstadisticaController;
 use App\Http\Controllers\CompraController;
 use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\StockController;
+use App\Http\Controllers\VentaController;
 
 
 // Rutas públicas
@@ -62,3 +63,14 @@ Route::get('/stock', [StockController::class, 'obtenerStock']);
 Route::post('/stock', [StockController::class, 'agregarStock']);
 Route::get('/inventarios', [StockController::class, 'obtenerInventarios']);
 Route::put('/inventarios/{id}', [StockController::class, 'actualizarInventario']);
+Route::delete('/stock/{id}', [StockController::class, 'eliminarInventario']);
+
+// Rutas de ventas
+Route::get('/ventas', [VentaController::class, 'index']);
+Route::post('/ventas', [VentaController::class, 'store']);
+Route::get('/ventas/{id}', [VentaController::class, 'show']);
+Route::put('/ventas/{id}/completar', [VentaController::class, 'completar']);
+Route::put('/ventas/{id}/cancelar', [VentaController::class, 'cancelar']);
+Route::get('/ventas-estadisticas', [VentaController::class, 'estadisticas']);
+Route::delete('/ventas/{id}', [VentaController::class, 'destroy']);
+

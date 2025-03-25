@@ -1,37 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
-import axios from 'axios';
+import React, { useState, useEffect } from 'react';
 import ReactPaginate from 'react-paginate';
-import { obtenerInventarios, actualizarInventario, obtenerTodosLosProductos, obtenerProductosConStock } from '../services/productoService';
-import Toast from '../components/ui/Toast'; // Importar el componente Toast
+import { Link } from 'react-router-dom';
+import { obtenerInventarios, eliminarInventario } from '../services/productoService';
+import Toast from '../components/ui/Toast';
 import './css/Inventario.css';
 
-const API_URL = 'http://88.15.26.49:8000/api';
-
 const Inventario = () => {
-  const [productos, setProductos] = useState([]); // Productos disponibles
-  const [productosFiltrados, setProductosFiltrados] = useState([]);
-  const [categorias, setCategorias] = useState([]); // Categorías de productos
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null); // Categoría seleccionada
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
   const [inventarios, setInventarios] = useState([]);
   const [inventariosFiltrados, setInventariosFiltrados] = useState([]);
-  const [inventarioEditando, setInventarioEditando] = useState(null);
-  const [nuevoInventario, setNuevoInventario] = useState({
-    productoId: '',
-    talla: '',
-    color: '',
-    stock: ''
-  });
   const [paginaActual, setPaginaActual] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(1);
-  const [inventariosPorPagina] = useState(5);
-
-  // Estados para el select personalizado
-  const [productoSearch, setProductoSearch] = useState('');
-  const [showProductoDropdown, setShowProductoDropdown] = useState(false);
-  const selectRef = useRef(null);
+  const [inventariosPorPagina] = useState(4);
+  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
+  const [confirmarEliminacion, setConfirmarEliminacion] = useState(null);
 
   // Estado para el toast
   const [toastInfo, setToastInfo] = useState({
@@ -40,40 +24,16 @@ const Inventario = () => {
     tipo: 'success'
   });
 
+  // Monitorear el ancho de la ventana para ajustes responsive
   useEffect(() => {
-    const cargarProductos = async () => {
-      try {
-        setCargando(true);
-        const response = await obtenerProductosConStock();
-        if (response) {
-          setProductos(response);
-          setProductosFiltrados(response);
-        } else {
-          setProductos([]);
-        }
-      } catch (err) {
-        setError('Error al cargar los productos');
-        console.error(err);
-      } finally {
-        setCargando(false);
-      }
+    const handleResize = () => {
+      setWindowWidth(window.innerWidth);
     };
-
-    cargarProductos();
-  }, []);
-
-  useEffect(() => {
-    const cargarCategorias = async () => {
-      try {
-        const response = await axios.get(`${API_URL}/categorias`);
-        setCategorias(response.data);
-      } catch (error) {
-        console.error('Error al cargar categorías:', error);
-        setError('No se pudieron cargar las categorías. Por favor, intenta de nuevo.');
-      }
+    
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
     };
-
-    cargarCategorias();
   }, []);
 
   useEffect(() => {
@@ -101,141 +61,42 @@ const Inventario = () => {
     } else {
       const resultados = inventarios.filter(inventario =>
         inventario.producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        inventario.producto.descripcion.toLowerCase().includes(busqueda.toLowerCase())
+        inventario.producto.descripcion?.toLowerCase().includes(busqueda.toLowerCase())
       );
       setInventariosFiltrados(resultados);
     }
   }, [busqueda, inventarios]);
 
-  // Cerrar el dropdown cuando se hace clic fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (selectRef.current && !selectRef.current.contains(event.target)) {
-        setShowProductoDropdown(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [selectRef]);
-
-  // Función para filtrar productos para el dropdown
-  const productosFiltradosDropdown = productos
-    .filter(producto => 
-      producto.nombre.toLowerCase().includes(productoSearch.toLowerCase()))
-    .slice(0, 5); // Limitar a 5 productos
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setNuevoInventario({
-      ...nuevoInventario,
-      [name]: value
-    });
+  const handleConfirmarEliminacion = (inventario) => {
+    setConfirmarEliminacion(inventario);
   };
 
-  const handleProductoSearchChange = (e) => {
-    setProductoSearch(e.target.value);
-    setShowProductoDropdown(true);
+  const handleCancelarEliminacion = () => {
+    setConfirmarEliminacion(null);
   };
 
-  const selectProducto = (producto) => {
-    setNuevoInventario({
-      ...nuevoInventario,
-      productoId: producto.id
-    });
-    setProductoSearch(producto.nombre);
-    setShowProductoDropdown(false);
-  };
-
-  // Añadir esta nueva función para cancelar la edición
-  const handleCancelEdit = () => {
-    setInventarioEditando(null);
-    setNuevoInventario({
-      productoId: '',
-      talla: '',
-      color: '',
-      stock: ''
-    });
-    setProductoSearch('');
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const response = await axios.post(`${API_URL}/stock`, nuevoInventario);
-      if (response.status === 201) {
-        setToastInfo({
-          mostrar: true,
-          mensaje: 'Inventario creado exitosamente',
-          tipo: 'success'
-        });
-        setNuevoInventario({
-          productoId: '',
-          talla: '',
-          color: '',
-          stock: ''
-        });
-        setProductoSearch('');
-        const inventariosActualizados = await obtenerInventarios();
-        setInventarios(inventariosActualizados);
-        setInventariosFiltrados(inventariosActualizados);
-        setTotalPaginas(Math.ceil(inventariosActualizados.length / inventariosPorPagina));
-      }
-    } catch (error) {
-      console.error('Error al crear inventario:', error);
-      setToastInfo({
-        mostrar: true,
-        mensaje: 'Error al crear inventario',
-        tipo: 'error'
-      });
-    }
-  };
-
-  const handleEditInventario = (inventario) => {
-    setInventarioEditando(inventario);
-    setNuevoInventario({
-      productoId: inventario.id_producto,
-      talla: inventario.talla,
-      color: inventario.color,
-      stock: inventario.stock
-    });
+  const handleEliminarInventario = async () => {
+    if (!confirmarEliminacion) return;
     
-    // Buscar el nombre del producto y establecerlo en el campo de búsqueda
-    const productoSeleccionado = productos.find(p => p.id === inventario.id_producto);
-    if (productoSeleccionado) {
-      setProductoSearch(productoSeleccionado.nombre);
-    }
-  };
-
-  const handleUpdateInventario = async (e) => {
-    e.preventDefault();
     try {
-      const response = await actualizarInventario(inventarioEditando.id, nuevoInventario);
-      if (response.message) {
-        setToastInfo({
-          mostrar: true,
-          mensaje: 'Inventario actualizado exitosamente',
-          tipo: 'success'
-        });
-        setInventarioEditando(null);
-        setNuevoInventario({
-          productoId: '',
-          talla: '',
-          color: '',
-          stock: ''
-        });
-        setProductoSearch('');
-        const inventariosActualizados = await obtenerInventarios();
-        setInventarios(inventariosActualizados);
-        setInventariosFiltrados(inventariosActualizados);
-        setTotalPaginas(Math.ceil(inventariosActualizados.length / inventariosPorPagina));
-      }
-    } catch (error) {
-      console.error('Error al actualizar inventario:', error);
+      await eliminarInventario(confirmarEliminacion.id);
       setToastInfo({
         mostrar: true,
-        mensaje: 'Error al actualizar inventario',
+        mensaje: 'Inventario eliminado exitosamente',
+        tipo: 'success'
+      });
+      
+      const inventariosActualizados = await obtenerInventarios();
+      setInventarios(inventariosActualizados);
+      setInventariosFiltrados(inventariosActualizados);
+      setTotalPaginas(Math.ceil(inventariosActualizados.length / inventariosPorPagina));
+      
+      setConfirmarEliminacion(null);
+    } catch (error) {
+      console.error('Error al eliminar inventario:', error);
+      setToastInfo({
+        mostrar: true,
+        mensaje: 'Error al eliminar inventario',
         tipo: 'error'
       });
     }
@@ -253,9 +114,20 @@ const Inventario = () => {
   const indicePrimerInventario = indiceUltimoInventario - inventariosPorPagina;
   const inventariosActuales = inventariosFiltrados.slice(indicePrimerInventario, indiceUltimoInventario);
 
+  // Determinar cuántas páginas mostrar en la paginación según el ancho de la pantalla
+  const pageRangeDisplayed = windowWidth < 768 ? 1 : 5;
+  const marginPagesDisplayed = windowWidth < 768 ? 1 : 2;
+
   return (
     <div className="container mt-4">
-      <h1>Inventario</h1>
+      {/* Header con título y botón de crear */}
+      <div className="header-container">
+        <h1 className="inventory-title">Inventario</h1>
+        <Link to="/crear-inventario" className="crear-btn">
+          <i className="fas fa-plus"></i> Crear
+        </Link>
+      </div>
+      
       <div className="filtros-container">
         <div className="search-container">
           <input
@@ -276,153 +148,103 @@ const Inventario = () => {
         </div>
       </div>
 
-      <h2>Inventarios Existentes</h2>
+      <h2 className="inventory-subtitle">Inventarios Existentes</h2>
       {cargando ? (
         <div className="cargando">Cargando inventarios...</div>
       ) : error ? (
         <div className="error">{error}</div>
       ) : (
         <>
-          <table className="table table-striped">
-            <thead>
-              <tr>
-                <th>Producto</th>
-                <th>Talla</th>
-                <th>Color</th>
-                <th>Stock</th>
-                <th>Acciones</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inventariosActuales.map((inventario) => (
-                <tr key={inventario.id}>
-                  <td>{inventario.producto.nombre}</td>
-                  <td>{inventario.talla}</td>
-                  <td>{inventario.color}</td>
-                  <td>{inventario.stock}</td>
-                  <td>
-                    <button
-                      className="btn btn-warning"
-                      onClick={() => handleEditInventario(inventario)}
-                    >
-                      Editar
-                    </button>
-                  </td>
+          <div className="table-responsive">
+            <table className="table table-striped">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th>Talla</th>
+                  <th>Color</th>
+                  <th>Stock</th>
+                  <th>Acciones</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <ReactPaginate
-            previousLabel={'Anterior'}
-            nextLabel={'Siguiente'}
-            breakLabel={'...'}
-            breakClassName={'break-me'}
-            pageCount={totalPaginas}
-            marginPagesDisplayed={2}
-            pageRangeDisplayed={5}
-            onPageChange={handlePageClick}
-            containerClassName={'pagination'}
-            subContainerClassName={'pages pagination'}
-            activeClassName={'active'}
-          />
+              </thead>
+              <tbody>
+                {inventariosActuales.length > 0 ? (
+                  inventariosActuales.map((inventario) => (
+                    <tr key={inventario.id}>
+                      <td>{inventario.producto.nombre}</td>
+                      <td>{inventario.talla}</td>
+                      <td>{inventario.color}</td>
+                      <td>{inventario.stock}</td>
+                      <td>
+                        <div className="btn-group">
+                          <Link
+                            to={`/editar-inventario/${inventario.id}`}
+                            className="btn btn-warning btn-sm"
+                            title="Editar"
+                          >
+                            <i className="fas fa-edit"></i>
+                          </Link>
+                          <button
+                            className="btn btn-danger btn-sm"
+                            onClick={() => handleConfirmarEliminacion(inventario)}
+                            title="Eliminar"
+                          >
+                            <i className="fas fa-trash-alt"></i>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="text-center">
+                      No hay inventarios disponibles
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+          <div className="pagination-container">
+            <ReactPaginate
+              previousLabel={'←'}
+              nextLabel={'→'}
+              breakLabel={'...'}
+              breakClassName={'break-me'}
+              pageCount={totalPaginas}
+              marginPagesDisplayed={marginPagesDisplayed}
+              pageRangeDisplayed={pageRangeDisplayed}
+              onPageChange={handlePageClick}
+              containerClassName={'pagination'}
+              subContainerClassName={'pages pagination'}
+              activeClassName={'active'}
+              previousClassName={'pagination-prev'}
+              nextClassName={'pagination-next'}
+              pageLinkClassName={'pagination-link'}
+              previousLinkClassName={'pagination-link'}
+              nextLinkClassName={'pagination-link'}
+            />
+          </div>
         </>
       )}
 
-      <h2>{inventarioEditando ? 'Editar Inventario' : 'Agregar Inventario'}</h2>
-      <form onSubmit={inventarioEditando ? handleUpdateInventario : handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="productoId">Producto</label>
-          <div className="custom-select-container" ref={selectRef}>
-            <input
-              type="text"
-              className="form-control"
-              placeholder="Buscar producto..."
-              value={productoSearch}
-              onChange={handleProductoSearchChange}
-              onClick={() => !inventarioEditando && setShowProductoDropdown(true)}
-              disabled={!!inventarioEditando}
-            />
-            {showProductoDropdown && !inventarioEditando && (
-              <div className="custom-select-options">
-                {productosFiltradosDropdown.length > 0 ? (
-                  productosFiltradosDropdown.map(producto => (
-                    <div 
-                      key={producto.id} 
-                      className="custom-select-option"
-                      onClick={() => selectProducto(producto)}
-                    >
-                      {producto.nombre}
-                    </div>
-                  ))
-                ) : (
-                  <div className="custom-select-option no-results">
-                    No hay resultados
-                  </div>
-                )}
-              </div>
-            )}
-            <input 
-              type="hidden" 
-              name="productoId" 
-              value={nuevoInventario.productoId} 
-              required
-            />
+      {/* Modal de confirmación de eliminación */}
+      {confirmarEliminacion && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h3>Confirmar eliminación</h3>
+            <p>¿Estás seguro de que deseas eliminar el inventario de {confirmarEliminacion.producto.nombre} con talla {confirmarEliminacion.talla} y color {confirmarEliminacion.color}?</p>
+            <div className="modal-buttons">
+              <button className="btn btn-danger" onClick={handleEliminarInventario}>
+                Eliminar
+              </button>
+              <button className="btn btn-secondary" onClick={handleCancelarEliminacion}>
+                Cancelar
+              </button>
+            </div>
           </div>
         </div>
-        <div className="form-group">
-          <label htmlFor="talla">Talla</label>
-          <input
-            type="text"
-            id="talla"
-            name="talla"
-            value={nuevoInventario.talla}
-            onChange={handleInputChange}
-            className="form-control"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="color">Color</label>
-          <input
-            type="text"
-            id="color"
-            name="color"
-            value={nuevoInventario.color}
-            onChange={handleInputChange}
-            className="form-control"
-            required
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="stock">Stock</label>
-          <input
-            type="number"
-            id="stock"
-            name="stock"
-            value={nuevoInventario.stock}
-            onChange={handleInputChange}
-            className="form-control"
-            required
-          />
-        </div>
-        <div className="form-buttons">
-          <button type="submit" className="btn btn-primary">
-            {inventarioEditando ? 'Actualizar Inventario' : 'Agregar Inventario'}
-          </button>
-          
-          {inventarioEditando && (
-            <button 
-              type="button" 
-              className="btn btn-secondary ml-2" 
-              onClick={handleCancelEdit}
-            >
-              Cancelar
-            </button>
-          )}
-        </div>
-      </form>
+      )}
 
-      {/* Mostrar Toast de notificación */}
       <Toast
         mensaje={toastInfo.mensaje}
         tipo={toastInfo.tipo}

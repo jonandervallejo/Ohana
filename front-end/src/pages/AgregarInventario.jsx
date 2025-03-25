@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { obtenerProductosConStock } from '../services/productoService';
-import Toast from '../components/ui/Toast'; // Importar el componente Toast
+import Toast from '../components/ui/Toast';
 import './css/Inventario.css';
 
 const API_URL = 'http://88.15.26.49:8000/api';
@@ -15,7 +15,6 @@ const AgregarInventario = () => {
     stock: ''
   });
 
-  // Estado para el toast
   const [toastInfo, setToastInfo] = useState({
     mostrar: false,
     mensaje: '',
@@ -26,11 +25,7 @@ const AgregarInventario = () => {
     const cargarProductos = async () => {
       try {
         const response = await obtenerProductosConStock();
-        if (response) {
-          setProductos(response);
-        } else {
-          setProductos([]);
-        }
+        setProductos(response || []);
       } catch (err) {
         console.error('Error al cargar los productos', err);
       }

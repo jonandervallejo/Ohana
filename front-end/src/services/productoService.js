@@ -159,3 +159,21 @@ export const actualizarInventario = async (id, inventario) => {
     throw error;
   }
 };
+
+export const eliminarInventario = async (id) => {
+  const token = getAuthToken();
+  
+  try {
+    const response = await axios.delete(`${API_URL}/stock/${id}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error al eliminar inventario:', error);
+    throw error;
+  }
+};

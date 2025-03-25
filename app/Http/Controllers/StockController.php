@@ -50,35 +50,48 @@ class StockController extends Controller
     }
 
     public function obtenerInventarios()
-{
-    try {
-        $inventarios = Stock::with('producto.categoria')->get();
-        return response()->json($inventarios);
-    } catch (\Exception $e) {
-        \Log::error('Error al obtener los inventarios: ' . $e->getMessage());
-        return response()->json(['error' => 'Error al obtener los inventarios'], 500);
+    {
+        try {
+            $inventarios = Stock::with('producto.categoria')->get();
+            return response()->json($inventarios);
+        } catch (\Exception $e) {
+            \Log::error('Error al obtener los inventarios: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al obtener los inventarios'], 500);
+        }
     }
-}
 
     public function actualizarInventario(Request $request, $id)
-{
-    $request->validate([
-        'talla' => 'required|string|max:255',
-        'color' => 'required|string|max:255',
-        'stock' => 'required|integer|min:0',
-    ]);
+    {
+        $request->validate([
+            'talla' => 'required|string|max:255',
+            'color' => 'required|string|max:255',
+            'stock' => 'required|integer|min:0',
+        ]);
 
-    try {
-        $inventario = Stock::findOrFail($id);
-        $inventario->talla = $request->talla;
-        $inventario->color = $request->color;
-        $inventario->stock = $request->stock;
-        $inventario->save();
+        try {
+            $inventario = Stock::findOrFail($id);
+            $inventario->talla = $request->talla;
+            $inventario->color = $request->color;
+            $inventario->stock = $request->stock;
+            $inventario->save();
 
-        return response()->json(['message' => 'Inventario actualizado exitosamente']);
-    } catch (\Exception $e) {
-        \Log::error('Error al actualizar inventario: ' . $e->getMessage());
-        return response()->json(['error' => 'Error al actualizar inventario'], 500);
+            return response()->json(['message' => 'Inventario actualizado exitosamente']);
+        } catch (\Exception $e) {
+            \Log::error('Error al actualizar inventario: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al actualizar inventario'], 500);
+        }
     }
-}
+
+    public function eliminarInventario($id)
+    {
+        try {
+            $inventario = Stock::findOrFail($id);
+            $inventario->delete();
+
+            return response()->json(['message' => 'Inventario eliminado exitosamente']);
+        } catch (\Exception $e) {
+            \Log::error('Error al eliminar inventario: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al eliminar inventario'], 500);
+        }
+    }
 }
