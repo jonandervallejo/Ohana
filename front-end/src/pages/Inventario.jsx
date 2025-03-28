@@ -3,6 +3,7 @@ import ReactPaginate from 'react-paginate';
 import { Link } from 'react-router-dom';
 import { obtenerInventarios, eliminarInventario } from '../services/productoService';
 import Toast from '../components/ui/Toast';
+import ConfirmacionModal from '../components/ui/CofirmacionModal';
 import './css/Inventario.css';
 
 const Inventario = () => {
@@ -17,14 +18,12 @@ const Inventario = () => {
   const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [confirmarEliminacion, setConfirmarEliminacion] = useState(null);
 
-  // Estado para el toast
   const [toastInfo, setToastInfo] = useState({
     mostrar: false,
     mensaje: '',
     tipo: 'success'
   });
 
-  // Monitorear el ancho de la ventana para ajustes responsive
   useEffect(() => {
     const handleResize = () => {
       setWindowWidth(window.innerWidth);
@@ -114,13 +113,11 @@ const Inventario = () => {
   const indicePrimerInventario = indiceUltimoInventario - inventariosPorPagina;
   const inventariosActuales = inventariosFiltrados.slice(indicePrimerInventario, indiceUltimoInventario);
 
-  // Determinar cuántas páginas mostrar en la paginación según el ancho de la pantalla
   const pageRangeDisplayed = windowWidth < 768 ? 1 : 5;
   const marginPagesDisplayed = windowWidth < 768 ? 1 : 2;
 
   return (
     <div className="container mt-4">
-      {/* Header con título y botón de crear */}
       <div className="header-container">
         <h1 className="inventory-title">Inventario</h1>
         <Link to="/crear-inventario" className="crear-btn">
@@ -227,22 +224,16 @@ const Inventario = () => {
         </>
       )}
 
-      {/* Modal de confirmación de eliminación */}
       {confirmarEliminacion && (
-        <div className="modal-overlay">
-          <div className="modal-content">
-            <h3>Confirmar eliminación</h3>
-            <p>¿Estás seguro de que deseas eliminar el inventario de {confirmarEliminacion.producto.nombre} con talla {confirmarEliminacion.talla} y color {confirmarEliminacion.color}?</p>
-            <div className="modal-buttons">
-              <button className="btn btn-danger" onClick={handleEliminarInventario}>
-                Eliminar
-              </button>
-              <button className="btn btn-secondary" onClick={handleCancelarEliminacion}>
-                Cancelar
-              </button>
-            </div>
-          </div>
-        </div>
+        <ConfirmacionModal 
+          titulo="Eliminar inventario"
+          mensaje={`¿Estás seguro de que deseas eliminar el inventario de ${confirmarEliminacion.producto.nombre} con talla ${confirmarEliminacion.talla} y color ${confirmarEliminacion.color}?`}
+          onConfirm={handleEliminarInventario}
+          onCancel={handleCancelarEliminacion}
+          confirmText={<><i className="fas fa-trash-alt"></i> Eliminar</>}
+          cancelText="Cancelar"
+          tipo="danger"
+        />
       )}
 
       <Toast

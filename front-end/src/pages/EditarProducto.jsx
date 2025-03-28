@@ -6,17 +6,14 @@ import Toast from '../components/ui/Toast';
 import Layout from '../components/layout/Layout';
 
 const API_URL = 'http://88.15.26.49:8000/api';
-// Nueva constante que remueve la parte /api para acceder a las imágenes
 const BASE_URL = API_URL.replace('/api', '');
 
-// Detectar si estamos en dispositivo móvil de manera sencilla
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
 // Componente para una imagen arrastrable
 const DraggableImage = ({ image, index, moveImage, setAsMain, removeImage, isMain }) => {
     const ref = useRef(null);
     
-    // Implementación simplificada de drag and drop para arrastrar imágenes
     const handleDragStart = (e) => {
       e.dataTransfer.setData('text/plain', index.toString());
       e.dataTransfer.effectAllowed = 'move';
@@ -111,13 +108,11 @@ const EditarProducto = () => {
     tipo: '',
   });
   
-  // Estado para imágenes
   const [mainImage, setMainImage] = useState(null);
   const [carouselImages, setCarouselImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
   const [imagesToRemove, setImagesToRemove] = useState([]);
   
-  // Estado para el toast
   const [toastInfo, setToastInfo] = useState({
     mostrar: false,
     mensaje: '',
@@ -125,7 +120,6 @@ const EditarProducto = () => {
   });
 
   
-  // Función para cargar las categorías
   const cargarCategorias = useCallback(async () => {
     try {
       const response = await axios.get(`${API_URL}/categorias`);
@@ -186,7 +180,7 @@ useEffect(() => {
     };
     
     cargarProducto();
-    cargarCategorias(); // Add this line to load categories
+    cargarCategorias();
 }, [id]);
 
 
@@ -198,7 +192,6 @@ useEffect(() => {
     });
   };
   
-  // Función para procesar imágenes (redimensionar si es necesario)
   const processImage = (file) => {
     return new Promise((resolve) => {
       if (file.size <= 1024 * 1024) {
@@ -259,13 +252,11 @@ useEffect(() => {
     const file = e.target.files[0];
     if (!file) return;
     
-    // Validar que sea una imagen
     if (!file.type.startsWith('image/')) {
       setError('Por favor, selecciona un archivo de imagen válido.');
       return;
     }
     
-    // Validar tamaño (máximo 5MB)
     if (file.size > 5 * 1024 * 1024) {
       setError('La imagen no debe superar los 5MB.');
       return;
@@ -274,7 +265,6 @@ useEffect(() => {
     try {
       const processed = await processImage(file);
       
-      // Si ya había una imagen principal previa y es original, añadirla a la lista para eliminar
       if (mainImage && mainImage.isOriginal) {
         setImagesToRemove(prev => [...prev, mainImage.path]);
       }
@@ -295,7 +285,6 @@ useEffect(() => {
     const files = Array.from(e.target.files);
     if (files.length === 0) return;
     
-    // Validar que sean imágenes y que no excedan el tamaño máximo
     const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
     if (invalidFiles.length > 0) {
       setError('Algunos archivos seleccionados no son imágenes válidas.');
@@ -308,7 +297,6 @@ useEffect(() => {
       return;
     }
     
-    // Procesar todas las imágenes
     try {
       const processedImages = await Promise.all(
         files.map(async (file) => {
@@ -344,25 +332,20 @@ useEffect(() => {
   const setAsMain = (index) => {
     const selectedImage = carouselImages[index];
     
-    // Si ya había una imagen principal y es original, añadirla a la lista para eliminar
     if (mainImage && mainImage.isOriginal) {
       setImagesToRemove(prev => [...prev, mainImage.path]);
     }
     
-    // Guardar la imagen principal actual como imagen de carrusel
     const currentMainForCarousel = mainImage ? {
       ...mainImage,
       id: `carousel-${Date.now()}`
     } : null;
     
-    // Establecer la imagen seleccionada como principal
     setMainImage(selectedImage);
     
-    // Eliminar la imagen seleccionada del carrusel
     const newCarouselImages = [...carouselImages];
     newCarouselImages.splice(index, 1);
     
-    // Si había una imagen principal, añadirla al carrusel
     if (currentMainForCarousel) {
       newCarouselImages.push(currentMainForCarousel);
     }
@@ -373,15 +356,12 @@ useEffect(() => {
   const removeImage = (index) => {
     const imageToRemove = carouselImages[index];
     
-    // Si es una imagen original, añadirla a la lista para eliminar del servidor
     if (imageToRemove.isOriginal) {
       setImagesToRemove(prev => [...prev, imageToRemove.path]);
     }
     
-    // Eliminar del estado
     setCarouselImages(prev => prev.filter((_, i) => i !== index));
     
-    // Si es una imagen nueva, también eliminarla del estado de nuevas imágenes
     if (!imageToRemove.isOriginal) {
       setNewImages(prev => prev.filter(img => img.id !== imageToRemove.id));
     }
@@ -389,7 +369,6 @@ useEffect(() => {
   
   const removeMainImage = () => {
     if (mainImage) {
-      // Si es una imagen original, añadirla a la lista para eliminar del servidor
       if (mainImage.isOriginal) {
         setImagesToRemove(prev => [...prev, mainImage.path]);
       }
@@ -405,7 +384,6 @@ useEffect(() => {
       return;
     }
   
-    // No necesitamos validar que haya alguna imagen aquí, puede ser válido no tener imagen
   
     try {
       setGuardando(true);
@@ -414,53 +392,43 @@ useEffect(() => {
       const token = localStorage.getItem('token');
       const datosEnvio = new FormData();
   
-      // Agregar datos del formulario
       Object.keys(formData).forEach(key => {
         if (formData[key] !== null && formData[key] !== undefined) {
           datosEnvio.append(key, formData[key]);
         }
       });
   
-      // Agregar la imagen principal si es nueva (subida desde el PC)
       if (mainImage && !mainImage.isOriginal && mainImage.file) {
         datosEnvio.append('imagen_principal', mainImage.file);
       }
-      // Si la imagen principal es del carrusel (asumiendo que tiene path)
       else if (mainImage && mainImage.isOriginal && mainImage.path) {
-        // Esta es la clave: enviar la ruta de la imagen que queremos establecer como principal
         datosEnvio.append('imagen_a_principal', mainImage.path);
         console.log("Estableciendo imagen de carrusel como principal:", mainImage.path);
       }
       
-      // Si no hay imagen principal pero había una originalmente, marcarla para eliminar
       if (!mainImage && !imagesToRemove.some(path => path === producto.imagen)) {
         datosEnvio.append('eliminar_imagen_principal', 'true');
         console.log("Eliminando imagen principal");
       }
   
-      // Agregar las nuevas imágenes del carrusel
       newImages.forEach((img, index) => {
         if (img.file) {
           datosEnvio.append(`imagenes_nuevas[${index}]`, img.file);
         }
       });
   
-      // Agregar el orden de las imágenes del carrusel como JSON
       const ordenImagenes = {};
       carouselImages.forEach((img, index) => {
         ordenImagenes[img.id] = index;
       });
       datosEnvio.append('orden_imagenes', JSON.stringify(ordenImagenes));
   
-      // Agregar las imágenes a eliminar
       imagesToRemove.forEach((path, index) => {
         datosEnvio.append(`imagenes_eliminar[${index}]`, path);
       });
   
-      // Emular método PUT para Laravel
       datosEnvio.append('_method', 'PUT');
   
-      // Debug - mostramos lo que enviamos
       console.log("Enviando datos al servidor:");
       for (let [key, value] of datosEnvio.entries()) {
         console.log(`${key}: ${value instanceof File ? `Archivo: ${value.name}` : value}`);
@@ -514,7 +482,6 @@ useEffect(() => {
     setError('');
   };
   
-  // Contenido que se renderizará dentro del Layout
   const contenido = (
     <>
       <div className="page-header">
@@ -625,7 +592,6 @@ useEffect(() => {
                 />
               </div>
               
-              {/* Sección de imágenes mejorada */}
               <div className="images-section">
                 <h3>Imágenes del Producto</h3>
                 
@@ -705,7 +671,6 @@ useEffect(() => {
                       <i className="fas fa-info-circle"></i> Haz clic en la estrella para establecer como principal.
                     </p>
                     
-                    {/* Implementación sin DndProvider */}
                     <div className="carousel-images-grid">
                       {carouselImages.length > 0 ? (
                         carouselImages.map((image, index) => (

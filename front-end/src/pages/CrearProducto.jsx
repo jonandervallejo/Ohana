@@ -2,11 +2,9 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './css/CrearProducto.css';
-import Toast from '../components/ui/Toast'; // Importamos el componente Toast
-
+import Toast from '../components/ui/Toast';
 const API_URL = 'http://88.15.26.49:8000/api';
 
-// Componente mejorado para manejar la selección de imágenes (compatible con móviles)
 const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange, previews, onRemove }) => {
   const fileInputRef = useRef(null);
 
@@ -14,16 +12,13 @@ const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange,
     fileInputRef.current.click();
   };
 
-  // Captura y optimización de imágenes
   const processImageFile = (file) => {
-    // Revisamos el tamaño de la imagen
     const sizeInMB = file.size / (1024 * 1024);
     if (sizeInMB > 5) {
       alert(`La imagen "${file.name}" es demasiado grande (${sizeInMB.toFixed(2)}MB). El tamaño máximo es 5MB.`);
       return null;
     }
 
-    // Verificamos tipo de archivo - más permisivo para móviles
     if (!file.type.startsWith('image/') && !file.type.includes('image')) {
       alert(`El archivo "${file.name}" no es una imagen válida.`);
       return null;
@@ -37,7 +32,6 @@ const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange,
     
     if (!files || files.length === 0) return;
     
-    // Para selección múltiple
     if (multiple) {
       const processedFiles = [];
       
@@ -49,7 +43,6 @@ const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange,
       }
       
       if (processedFiles.length > 0) {
-        // En lugar de DataTransfer, pasamos los archivos directamente
         onChange({
           target: {
             files: processedFiles
@@ -57,7 +50,6 @@ const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange,
         });
       }
     } 
-    // Para selección única
     else {
       const processedFile = processImageFile(files[0]);
       if (processedFile) {
@@ -70,7 +62,6 @@ const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange,
     }
   };
   
-  // Permitir captura directa desde cámara en móviles
   return (
     <div className="form-group">
       <label>{label}</label>
@@ -87,7 +78,6 @@ const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange,
           type="file"
           onChange={handleFileChange}
           accept="image/*"
-          // Eliminamos el atributo capture para mejor compatibilidad
           multiple={multiple}
           className="image-input"
           style={{display: 'none'}}
@@ -118,9 +108,7 @@ const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange,
   );
 });
 
-// Mover FormularioProducto fuera del componente principal
 const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
-  // Recuperar datos almacenados
   const storedData = localStorage.getItem('productoFormData');
   const initialFormData = storedData ? JSON.parse(storedData) : {
     nombre: '',
@@ -138,7 +126,6 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
   const [galleryPreviews, setGalleryPreviews] = useState([]);
   const [error, setError] = useState('');
 
-  // Persistir datos del formulario
   useEffect(() => {
     localStorage.setItem('productoFormData', JSON.stringify(formData));
   }, [formData]);
@@ -153,21 +140,17 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
 
   const handleMainImageChange = useCallback((e) => {
     try {
-      // En móviles, e.target.files puede ser un array
       const file = Array.isArray(e.target.files) ? e.target.files[0] : e.target.files[0];
       if (!file) return;
       
-      // Limpiar URL previa
       if (mainImagePreview) {
         URL.revokeObjectURL(mainImagePreview);
       }
 
-      // Guardar archivo e imagen de vista previa
       setMainImage(file);
       const previewURL = URL.createObjectURL(file);
       setMainImagePreview(previewURL);
       
-      // Persistir la información de que hay una imagen
       localStorage.setItem('hasMainImage', 'true');
     } catch (error) {
       console.error("Error al manejar la imagen principal:", error);
@@ -177,14 +160,12 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
 
   const handleGalleryImagesChange = useCallback((e) => {
     try {
-      // En móviles, e.target.files puede ser un array directamente
       const files = Array.isArray(e.target.files) ? e.target.files : Array.from(e.target.files || []);
       if (!files.length) return;
       
       const newImages = [...galleryImages];
       const newPreviews = [...galleryPreviews];
 
-      // Limitar la cantidad de imágenes a 5 en total
       const remainingSlots = 5 - newImages.length;
       
       if (remainingSlots <= 0) {
@@ -192,7 +173,6 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
         return;
       }
       
-      // Solo agregar hasta el límite permitido
       const filesToAdd = files.slice(0, remainingSlots);
 
       filesToAdd.forEach(file => {
@@ -201,7 +181,6 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
           newPreviews.push(URL.createObjectURL(file));
         } catch (err) {
           console.error("Error creando URL para preview:", err);
-          // Usar una imagen placeholder si falla
           newPreviews.push("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAAAxklEQVR4nO3bsQ3CMBRF0UBYgIqePWAIamZgFkZgAqrUoXCBBVhEyvecc+tI77ePFNlxAAAAAAAAeKhp+Y5vZ9y3Le9TpkmS430/Z908Z9yXZO9TpkmSfb/Oz5/35N24LjCttX7vU0q5tDiG31VVm4jY/O1dMCRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMqRNRFxbHMN/VNUhIp6tbwEAAAAAAACAlQ/sBg5j3UsCgQAAAABJRU5ErkJggg==");
         }
       });
@@ -209,7 +188,6 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
       setGalleryImages(newImages);
       setGalleryPreviews(newPreviews);
       
-      // Persistir cantidad de imágenes
       localStorage.setItem('galleryImageCount', newImages.length);
     } catch (error) {
       console.error("Error al manejar las imágenes de la galería:", error);
@@ -246,44 +224,35 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
 
     const productoData = new FormData();
 
-    // Agregar datos del formulario
     Object.keys(formData).forEach(key => {
       if (formData[key]) {
         productoData.append(key, formData[key]);
       }
     });
 
-    // Agregar imagen principal si existe
     if (mainImage) {
       productoData.append('imagen', mainImage);
       console.log("Imagen principal agregada:", mainImage.name);
     }
 
-    // Agregar imágenes de galería si existen - MODIFICADO
     if (galleryImages.length > 0) {
-      // Convertir las imágenes de galería a un array JSON para el backend
       const imagenesArray = [];
       
-      // Agregar cada imagen individualmente a FormData con un nombre único
       for (let i = 0; i < galleryImages.length; i++) {
         const timestamp = Date.now();
         const imageName = `galeria_${timestamp}_${i}.jpg`;
         
-        // Agregar la imagen al FormData para envío
         productoData.append(`imagenes_files[]`, galleryImages[i]);
         
-        // Guardar la referencia en el array
         imagenesArray.push(imageName);
       }
       
-      // Guardar el array como JSON en el campo imagenes
       productoData.append('imagenes', JSON.stringify(imagenesArray));
       
       console.log("Imágenes de galería agregadas:", galleryImages.length);
       console.log("JSON de imágenes:", JSON.stringify(imagenesArray));
     }
 
-    // Limpiar datos guardados localmente
     localStorage.removeItem('productoFormData');
     localStorage.removeItem('hasMainImage');
     localStorage.removeItem('galleryImageCount');
@@ -291,7 +260,6 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
     onSubmit(productoData);
   }, [formData, mainImage, galleryImages, onSubmit]);
 
-  // Limpiar URLs al desmontar
   useEffect(() => {
     return () => {
       if (mainImagePreview) {
@@ -426,7 +394,6 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
   );
 };
 
-// Componente principal
 const CrearProducto = () => {
   const [categorias, setCategorias] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -434,7 +401,6 @@ const CrearProducto = () => {
   const [guardando, setGuardando] = useState(false);
   const navigate = useNavigate();
   
-  // Estado para el toast
   const [toastInfo, setToastInfo] = useState({
     mostrar: false,
     mensaje: '',
@@ -469,7 +435,6 @@ const CrearProducto = () => {
       
       const token = localStorage.getItem('token');
       
-      // Mostrar en consola lo que estamos enviando (para depuración)
       console.log("Enviando formulario con estos datos:");
       for (let [key, value] of productoData.entries()) {
         if (value instanceof File) {
@@ -488,17 +453,14 @@ const CrearProducto = () => {
       
       console.log("Respuesta del servidor:", response.data);
       
-      // Obtener el nombre del producto para el mensaje de éxito
       const nombreProducto = productoData.get('nombre');
       
-      // Mostrar toast con mensaje de éxito
       setToastInfo({
         mostrar: true,
         mensaje: `¡Producto "${nombreProducto}" creado con éxito!`,
         tipo: 'success'
       });
       
-      // Redirigir después de un breve retraso
       setTimeout(() => {
         navigate('/productos');
       }, 2500);
@@ -506,7 +468,6 @@ const CrearProducto = () => {
     } catch (error) {
       console.error('Error al guardar producto:', error);
       
-      // Logging detallado para diagnóstico
       if (error.response) {
         console.error('Respuesta del servidor:', error.response.data);
         console.error('Estado HTTP:', error.response.status);
@@ -517,7 +478,6 @@ const CrearProducto = () => {
         console.error('Error al configurar la petición:', error.message);
       }
       
-      // Obtener mensaje de error del servidor si existe
       let errorMsg = 'Error al guardar el producto. Por favor, intenta de nuevo.';
       
       if (error.response) {
@@ -530,7 +490,6 @@ const CrearProducto = () => {
       
       setError(errorMsg);
       
-      // Mostrar toast con mensaje de error
       setToastInfo({
         mostrar: true,
         mensaje: 'Error al crear el producto. Revisa los datos e intenta nuevamente.',
@@ -598,7 +557,6 @@ const CrearProducto = () => {
         </div>
       )}
       
-      {/* Mostrar Toast de notificación */}
       <Toast
         mensaje={toastInfo.mensaje}
         tipo={toastInfo.tipo}

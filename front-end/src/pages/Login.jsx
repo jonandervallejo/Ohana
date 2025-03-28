@@ -1,8 +1,8 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import './css/Login.css';
-import { FaEye, FaEyeSlash } from 'react-icons/fa'; 
+import { FaEye, FaEyeSlash, FaLock, FaLockOpen, FaUserLock } from 'react-icons/fa'; 
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -10,9 +10,14 @@ const LoginPage = () => {
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSecure, setIsSecure] = useState(false);
   
-  const { login } = useContext(AuthContext);
+  const { login, ROLE_CLIENTE } = useContext(AuthContext);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setIsSecure(window.location.protocol === 'https:');
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -24,7 +29,16 @@ const LoginPage = () => {
       if (result.success) {
         navigate('/');
       } else {
-        setError(result.message || 'Error al iniciar sesión');
+        if (result.message && result.message.includes('clientes no tienen acceso')) {
+          setError(
+            <div className="client-error">
+              <FaUserLock style={{ marginRight: '8px' }} />
+              Los clientes no tienen acceso a este sistema. Por favor, utilice la aplicación para clientes.
+            </div>
+          );
+        } else {
+          setError(result.message || 'Error al iniciar sesión');
+        }
       }
     } catch (error) {
       setError('Error al conectar con el servidor. Inténtalo de nuevo.');
@@ -44,6 +58,30 @@ const LoginPage = () => {
             <h1>Ohana</h1>
           </div>
           <p className="login-subheader">Acceso al sistema de gestión</p>
+          
+          <div style={{ 
+            padding: '8px', 
+            margin: '10px 0', 
+            borderRadius: '4px',
+            backgroundColor: isSecure ? '#e8f5e9' : '#ffebee',
+            color: isSecure ? '#2e7d32' : '#c62828',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}>
+            {isSecure ? (
+              <>
+                <FaLock style={{ marginRight: '8px' }} /> 
+                <span>Conexión segura (HTTPS)</span>
+              </>
+            ) : (
+              <>
+                <FaLockOpen style={{ marginRight: '8px' }} /> 
+                <span>Conexión no segura (HTTP)</span>
+              </>
+            )}
+          </div>
+          
         </div>
         
         <form onSubmit={handleSubmit} className="login-form">

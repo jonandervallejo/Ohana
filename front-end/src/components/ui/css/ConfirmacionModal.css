@@ -164,7 +164,7 @@
   background-color: #cbd5e0;
 }
 
-.btn-confirmar:active, .btn-eliminar:active, .btn-cancelar:active {
+.btn-confirmar:active, .btn-cancelar:active {
   transform: scale(0.98);
 }
 
@@ -203,7 +203,7 @@
     flex-wrap: wrap;
   }
   
-  .btn-confirmar, .btn-eliminar, .btn-cancelar {
+  .btn-confirmar, .btn-cancelar {
     padding: 10px 15px;
     flex: 1;
     text-align: center;

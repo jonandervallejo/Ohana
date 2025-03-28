@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from '../context/AuthContext';
-import { FaEye, FaEyeSlash, FaSave, FaLock } from 'react-icons/fa'; // Importar iconos
+import { FaEye, FaEyeSlash, FaSave, FaLock } from 'react-icons/fa';
 import './css/Ajustes.css';
 
 const Ajustes = () => {
@@ -26,7 +26,6 @@ const Ajustes = () => {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  // Cargar datos del usuario
   useEffect(() => {
     if (usuario) {
       setUserData({
@@ -53,7 +52,6 @@ const Ajustes = () => {
     });
   };
   
-  // Actualizar datos del perfil
   const handleUpdateProfile = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -75,7 +73,6 @@ const Ajustes = () => {
       
       if (response.ok) {
         setSuccess('Datos actualizados correctamente');
-        // Actualizar datos del usuario en el contexto
         setUsuario(data.usuario);
       } else {
         setError(data.message || 'Error al actualizar el perfil');
@@ -87,7 +84,6 @@ const Ajustes = () => {
     }
   };
   
-  // Cambiar contraseña
   const handleChangePassword = async (e) => {
     e.preventDefault();
     
@@ -139,12 +135,10 @@ const Ajustes = () => {
     <div className="ajustes-container">
       <h1 className="ajustes-title">Ajustes de cuenta</h1>
 
-      {/* Mensajes de éxito o error */}
       {error && <div className="alert alert-error">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
       
       <div className="ajustes-grid">
-        {/* Panel de datos de usuario */}
         <div className="ajustes-panel">
           <h2>Datos personales</h2>
           <form onSubmit={handleUpdateProfile}>
@@ -221,7 +215,6 @@ const Ajustes = () => {
           </form>
         </div>
         
-        {/* Panel para cambiar contraseña */}
         <div className="ajustes-panel">
           <h2>Cambiar contraseña</h2>
           <form onSubmit={handleChangePassword}>

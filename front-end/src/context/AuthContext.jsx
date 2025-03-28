@@ -6,6 +6,11 @@ const AuthContext = createContext();
 const FILE_SELECTION_EXPIRY = 6000; // 2 minutos
 const TOKEN_CHECK_DELAY = 5000; // 5 segundos
 
+// Constantes para roles
+const ROLE_ADMIN = 1;
+const ROLE_TECNICO = 2;
+const ROLE_CLIENTE = 3;
+
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuarioState] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -72,6 +77,18 @@ export const AuthProvider = ({ children }) => {
         if (response.ok) {
           const data = await response.json();
           console.log("Datos del usuario:", data);
+          
+          // Verificar el rol del usuario - rechazar clientes (id_rol = 3)
+          if (data.id_rol === ROLE_CLIENTE) {
+            console.log("Cliente intentando acceder. Acceso denegado.");
+            localStorage.removeItem('token');
+            setUsuarioState(null);
+            setTokenState(null);
+            alert("Los clientes no tienen acceso a este sistema. Por favor, utilice la aplicación para clientes.");
+            window.location.href = '/login';
+            return;
+          }
+          
           setUsuarioState(data);
         } else {
           // Intentar leer el mensaje de error
@@ -256,6 +273,14 @@ export const AuthProvider = ({ children }) => {
       console.log("Respuesta de login:", data);
       
       if (response.ok) {
+        // Verificar que no sea un cliente (id_rol = 3)
+        if (data.usuario && data.usuario.id_rol === ROLE_CLIENTE) {
+          return { 
+            success: false, 
+            message: 'Los clientes no tienen acceso a este sistema. Por favor, utilice la aplicación para clientes.' 
+          };
+        }
+        
         localStorage.setItem('token', data.token);
         setTokenState(data.token);
         setUsuarioState(data.usuario);
@@ -291,6 +316,28 @@ export const AuthProvider = ({ children }) => {
     setUsuarioState(null);
     setTokenState(null);
   };
+  
+  // Funciones auxiliares para verificar roles
+  const isAdmin = () => {
+    return usuario && usuario.id_rol === ROLE_ADMIN;
+  };
+  
+  const isTecnico = () => {
+    return usuario && usuario.id_rol === ROLE_TECNICO;
+  };
+  
+  const getRole = () => {
+    if (!usuario) return null;
+    
+    switch (usuario.id_rol) {
+      case ROLE_ADMIN:
+        return 'admin';
+      case ROLE_TECNICO:
+        return 'tecnico';
+      default:
+        return 'unknown';
+    }
+  };
 
   return (
     <AuthContext.Provider value={{ 
@@ -301,7 +348,16 @@ export const AuthProvider = ({ children }) => {
       logout,
       setUsuario,
       startFileSelection,
-      endFileSelection
+      endFileSelection,
+      checkUserLoggedIn,
+      // Añadimos las funciones de verificación de roles
+      isAdmin,
+      isTecnico,
+      getRole,
+      // Constantes de roles
+      ROLE_ADMIN,
+      ROLE_TECNICO,
+      ROLE_CLIENTE
     }}>
       {children}
     </AuthContext.Provider>

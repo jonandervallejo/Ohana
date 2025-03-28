@@ -16,7 +16,6 @@ const EditarInventario = () => {
     stock: ''
   });
 
-  // Estado para el toast
   const [toastInfo, setToastInfo] = useState({
     mostrar: false,
     mensaje: '',
@@ -70,7 +69,6 @@ const EditarInventario = () => {
           tipo: 'success'
         });
         
-        // Esperar antes de redirigir
         setTimeout(() => {
           navigate('/inventario');
         }, 2000);
@@ -91,7 +89,6 @@ const EditarInventario = () => {
 
   return (
     <div className="container mt-4">
-      {/* Header con título y botón de volver */}
       <div className="header-container">
         <h1 className="inventory-title">Editar Inventario</h1>
         <Link to="/inventario" className="volver-btn btn btn-secondary">

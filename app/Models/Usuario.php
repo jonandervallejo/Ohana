@@ -9,71 +9,70 @@ use Laravel\Sanctum\HasApiTokens;
 
 class Usuario extends Authenticatable
 {
-    use HasApiTokens, Notifiable, HasFactory;
+    use HasApiTokens, HasFactory, Notifiable;
 
+    /**
+     * El nombre de la tabla asociada con el modelo.
+     * Especificado explícitamente porque está en singular.
+     */
     protected $table = 'usuario';
 
+    /**
+     * Los atributos que son asignables masivamente.
+     */
     protected $fillable = [
         'nombre',
-        'apellido1',
-        'apellido2',
+        'apellidos',
         'email',
         'password',
-        'telefono',
         'id_rol',
+        'telefono',
     ];
 
+    /**
+     * Los atributos que deben ocultarse para las matrices.
+     */
     protected $hidden = [
         'password',
+        'remember_token',
     ];
 
+    /**
+     * Los atributos que deben convertirse.
+     */
     protected $casts = [
+        'email_verified_at' => 'datetime',
         'password' => 'hashed',
     ];
+    
+    /**
+     * Definición de roles
+     */
+    const ROLE_ADMIN = 1;
+    const ROLE_TECNICO = 2;
+    const ROLE_CLIENTE = 3;
 
     /**
-     * Relación con el modelo Rol.
-     * Un usuario pertenece a un rol específico (1:N).
+     * Verifica si el usuario es administrador
      */
-    public function rol()
+    public function isAdmin()
     {
-        return $this->belongsTo(Rol::class, 'id_rol');
+        return $this->id_rol === self::ROLE_ADMIN;
     }
 
     /**
-     * Relación con el modelo Notificacion.
-     * Un usuario tiene muchas notificaciones (1:N).
+     * Verifica si el usuario es técnico
      */
-    public function notificaciones()
+    public function isTecnico()
     {
-        return $this->hasMany(Notificacion::class, 'id_usuario', 'id');
+        return $this->id_rol === self::ROLE_TECNICO;
     }
 
     /**
-     * Relación con el modelo Direccion.
-     * Un usuario puede tener muchas direcciones de envío (1:N).
+     * Verifica si el usuario es cliente
      */
-    public function direccion()
+    public function isCliente()
     {
-        return $this->hasMany(Direccion::class, 'id_usuario', 'id');
+        return $this->id_rol === self::ROLE_CLIENTE;
     }
-
-    /**
-     * Relación con el modelo Compra.
-     * Un usuario puede tener muchas compras (1:N).
-     */
-    public function compra()
-    {
-        return $this->hasMany(Compra::class, 'id_usuario', 'id');
-    }
-
-    /**
-     * Relación con el modelo Carrito.
-     * Un usuario puede tener muchos carritos (1:N).
-     */
-    public function carrito()
-    {
-        return $this->hasMany(Carrito::class, 'id_usuario', 'id');
-    }
-
 }

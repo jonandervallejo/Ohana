@@ -799,3 +799,82 @@
     height: 24px;
   }
 }
+
+/* Añadir estos estilos al final del archivo */
+
+/* Estilos para la integración del ConfirmacionModal en Inventario */
+.container .confirmacion-modal .modal-content {
+  max-width: 460px;
+  border-radius: 8px;
+}
+
+.container .confirmacion-modal .modal-header {
+  background-color: #f8d7da;
+  border-bottom: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 15px 20px;
+}
+
+.container .confirmacion-modal .modal-header h2 {
+  font-size: 1.3rem;
+  font-weight: 600;
+}
+
+.container .confirmacion-modal .modal-body {
+  padding: 20px;
+}
+
+.container .confirmacion-modal .modal-body p {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #333;
+}
+
+.container .confirmacion-modal .btn-eliminar {
+  width: auto;
+  height: auto;
+  border-radius: 6px;
+  padding: 10px 20px;
+  background-color: #dc3545;
+  color: white;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(220, 53, 69, 0.2);
+}
+
+.container .confirmacion-modal .btn-eliminar:hover {
+  background-color: #c82333;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(220, 53, 69, 0.3);
+}
+
+.container .confirmacion-modal .btn-cancelar {
+  border-radius: 6px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.container .confirmacion-modal .btn-cancelar:hover {
+  background-color: #e2e6ea;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.08);
+}
+
+@media (max-width: 576px) {
+  .container .confirmacion-modal .modal-content {
+    max-width: 90%;
+    width: 90%;
+  }
+  
+  .container .confirmacion-modal .modal-header h2 {
+    font-size: 1.1rem;
+  }
+  
+  .container .confirmacion-modal .btn-eliminar,
+  .container .confirmacion-modal .btn-cancelar {
+    padding: 8px 15px;
+    font-size: 0.85rem;
+  }
+}

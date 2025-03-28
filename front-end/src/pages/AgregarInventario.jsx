@@ -130,7 +130,6 @@ const AgregarInventario = () => {
         <button type="submit" className="btn btn-primary">Agregar Inventario</button>
       </form>
 
-      {/* Mostrar Toast de notificación */}
       <Toast
         mensaje={toastInfo.mensaje}
         tipo={toastInfo.tipo}

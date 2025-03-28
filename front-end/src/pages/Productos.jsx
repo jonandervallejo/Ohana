@@ -2,8 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import ReactPaginate from 'react-paginate';
-import { obtenerProductos, obtenerProductosPorCategoria } from '../services/productoService';
+import { obtenerProductos, obtenerProductosPorCategoria, eliminarProducto } from '../services/productoService';
 import TarjetaProducto from '../components/productos/TarjetaProducto';
+import ConfirmacionModal from '../components/ui/CofirmacionModal';
 import './css/Productos.css';
 
 const API_URL = 'http://88.15.26.49:8000/api';
@@ -19,7 +20,12 @@ const ProductosPage = () => {
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
   const [paginaActual, setPaginaActual] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(1);
-  const [filtroStock, setFiltroStock] = useState(false); // Estado para el filtro de stock
+  const [filtroStock, setFiltroStock] = useState(false);
+  
+  const [modalConfirmacion, setModalConfirmacion] = useState({
+    mostrar: false,
+    producto: null
+  });
 
   useEffect(() => {
     const cargarProductos = async () => {
@@ -84,16 +90,16 @@ const ProductosPage = () => {
 
   const filtrarPorCategoria = (idCategoria) => {
     setCategoriaSeleccionada(idCategoria);
-    setPaginaActual(0); // Resetear a la primera página al cambiar de categoría
+    setPaginaActual(0);
     setMostrarCategorias(false);
   };
 
   const limpiarFiltros = () => {
     setCategoriaSeleccionada(null);
     setBusqueda('');
-    setPaginaActual(0); // Resetear a la primera página al limpiar filtros
+    setPaginaActual(0);
     setMostrarCategorias(false);
-    setFiltroStock(false); // Resetear el filtro de stock
+    setFiltroStock(false);
   };
   
   const toggleCategorias = () => {
@@ -106,8 +112,36 @@ const ProductosPage = () => {
     ));
   };
 
-  const handleProductoEliminado = (productoId) => {
-    setProductos(productos.filter(p => p.id !== productoId));
+  const confirmarEliminacion = (producto) => {
+    setModalConfirmacion({
+      mostrar: true,
+      producto: producto
+    });
+  };
+
+  const cancelarEliminacion = () => {
+    setModalConfirmacion({
+      mostrar: false,
+      producto: null
+    });
+  };
+
+  const eliminarProductoConfirmado = async () => {
+    try {
+      const producto = modalConfirmacion.producto;
+      if (!producto) return;
+      
+      await eliminarProducto(producto.id);
+      setProductos(productos.filter(p => p.id !== producto.id));
+      
+      setModalConfirmacion({
+        mostrar: false,
+        producto: null
+      });
+    } catch (error) {
+      console.error("Error al eliminar el producto:", error);
+      setError("No se pudo eliminar el producto. Por favor, intenta de nuevo.");
+    }
   };
 
   const handlePageClick = (data) => {
@@ -187,6 +221,17 @@ const ProductosPage = () => {
             </div>
           )}
         </div>
+        
+        <div className="stock-filter">
+          <label>
+            <input 
+              type="checkbox" 
+              checked={filtroStock} 
+              onChange={(e) => setFiltroStock(e.target.checked)}
+            />
+            Solo productos con stock
+          </label>
+        </div>
       </div>
       
       {cargando ? (
@@ -203,7 +248,7 @@ const ProductosPage = () => {
                 producto={producto} 
                 esGestion={true}
                 onProductoActualizado={handleProductoActualizado}
-                onProductoEliminado={handleProductoEliminado}
+                onProductoEliminado={confirmarEliminacion}
               />
             </div>
           ))}
@@ -225,6 +270,18 @@ const ProductosPage = () => {
           activeClassName={'active'}
         />
       </div>
+
+      {modalConfirmacion.mostrar && (
+        <ConfirmacionModal 
+          titulo="Eliminar producto"
+          mensaje={`¿Estás seguro de que deseas eliminar el producto "${modalConfirmacion.producto?.nombre}"? Esta acción no se puede deshacer.`}
+          onConfirm={eliminarProductoConfirmado}
+          onCancel={cancelarEliminacion}
+          confirmText="Eliminar"
+          cancelText="Cancelar"
+          tipo="danger"
+        />
+      )}
     </div>
   );
 };

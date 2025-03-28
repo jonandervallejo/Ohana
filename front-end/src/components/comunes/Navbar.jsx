@@ -87,8 +87,8 @@ const ConfirmDialog = ({ isOpen, message, onConfirm, onCancel }) => {
 };
 
 const Navbar = () => {
-  const { usuario, logout } = useContext(AuthContext);
-  const navigate = useNavigate(); // Añadido hook de navegación
+  const { usuario, logout, isAdmin, isTecnico, ROLE_ADMIN, ROLE_TECNICO } = useContext(AuthContext);
+  const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false); 
@@ -110,7 +110,6 @@ const Navbar = () => {
     setShowLogoutConfirm(true);
   };
 
-  // Actualizado para navegar a la página de ajustes
   const handleSettingsClick = () => {
     setUserMenuOpen(false);
     navigate('/ajustes');
@@ -119,7 +118,7 @@ const Navbar = () => {
   const confirmLogout = () => {
     logout();
     setShowLogoutConfirm(false);
-    window.location.href = '/login';
+    navigate('/login');
   };
 
   const cancelLogout = () => {
@@ -171,11 +170,13 @@ const Navbar = () => {
           {hamburgerIcon}
         </button>
         <h2 className="mobile-header-title">Ohana</h2>
+        {/* Removido el indicador de rol numérico */}
       </header>
       
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} ref={sidebarRef}>
         <div className="sidebar-header">
           <h2>Ohana</h2>
+          {/* Removido el indicador de rol numérico */}
           <button className="close-sidebar" onClick={toggleSidebar}>×</button>
         </div>
         
@@ -204,6 +205,16 @@ const Navbar = () => {
               <span>Inventario</span>
             </Link>
           </li>
+          
+          {/* Opciones específicas para administradores */}
+          {usuario && usuario.id_rol === ROLE_ADMIN && (
+            <li className="sidebar-item">
+              <Link to="/usuarios" className="sidebar-link" onClick={handleNavLinkClick}>
+                {userIcon}
+                <span>Gestionar Usuarios</span>
+              </Link>
+            </li>
+          )}
         </ul>
         
         {usuario && (
@@ -217,7 +228,11 @@ const Navbar = () => {
                   <div className="user-avatar">
                     {usuario.nombre.charAt(0).toUpperCase()}
                   </div>
-                  <span>{usuario.nombre}</span>
+                  <span>
+                    {usuario.nombre} 
+                    {usuario.id_rol === ROLE_ADMIN && <small className="role-text"> (Admin)</small>}
+                    {usuario.id_rol === ROLE_TECNICO && <small className="role-text"> (Técnico)</small>}
+                  </span>
                   <div className={`user-menu-arrow ${userMenuOpen ? 'open' : ''}`}>
                     <svg 
                       xmlns="http://www.w3.org/2000/svg" 

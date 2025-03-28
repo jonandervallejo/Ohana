@@ -20,12 +20,10 @@ const CrearInventario = () => {
     stock: ''
   });
 
-  // Estados para el select personalizado
   const [productoSearch, setProductoSearch] = useState('');
   const [showProductoDropdown, setShowProductoDropdown] = useState(false);
   const selectRef = useRef(null);
 
-  // Estado para el toast
   const [toastInfo, setToastInfo] = useState({
     mostrar: false,
     mensaje: '',
@@ -54,7 +52,6 @@ const CrearInventario = () => {
     cargarProductos();
   }, []);
 
-  // Cerrar el dropdown cuando se hace clic fuera
   useEffect(() => {
     function handleClickOutside(event) {
       if (selectRef.current && !selectRef.current.contains(event.target)) {
@@ -67,11 +64,10 @@ const CrearInventario = () => {
     };
   }, [selectRef]);
 
-  // Función para filtrar productos para el dropdown
   const productosFiltradosDropdown = productos
     .filter(producto => 
       producto.nombre.toLowerCase().includes(productoSearch.toLowerCase()))
-    .slice(0, 5); // Limitar a 5 productos
+    .slice(0, 5);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -106,7 +102,6 @@ const CrearInventario = () => {
           tipo: 'success'
         });
         
-        // Esperar 2 segundos y luego redirigir a la página de inventario
         setTimeout(() => {
           navigate('/inventario');
         }, 2000);

@@ -22,13 +22,12 @@ const Inicio = () => {
       try {
         setCargando(true);
         
-        // Cargamos los datos por separado para que un error no afecte al otro
         let productosData = [];
         try {
-          const response = await obtenerProductos(1, 6); // Página 1, 6 productos por página
+          const response = await obtenerProductos(1, 6);
           productosData = response.data;
           setProductos(productosData);
-          setTotalProductos(response.total); // Total de productos
+          setTotalProductos(response.total); 
         } catch (err) {
           console.error('Error al cargar productos:', err);
         }
@@ -78,7 +77,6 @@ const Inicio = () => {
     cargarActividad();
   }, []);
 
-  // Función para formatear el precio
   const formatearPrecio = (precio) => {
     return `€${parseFloat(precio).toFixed(2)}`;
   };

@@ -18,6 +18,8 @@ import Footer from './components/comunes/Footer';
 import Ajustes from './pages/Ajustes';
 import ScrollToTop from './components/comunes/ScrollToTop';
 import EditarProducto from './pages/EditarProducto';
+import GestionUsuarios from './pages/GestionUsuarios'; // Nueva importación
+import RequireAdmin from './components/RequireAdmin'; // Nueva importación
 
 const LoadingSpinner = () => (
   <div className="loading-container">
@@ -42,6 +44,21 @@ const withLayout = (Component) => {
   };
 };
 
+// HOC para proteger rutas admin
+const withAdminCheck = (Component) => {
+  return (props) => {
+    const { isAdmin, loading } = useContext(AuthContext);
+    
+    if (loading) {
+      return <LoadingSpinner />;
+    }
+    
+    return isAdmin() ? (
+      <Component {...props} />
+    ) : <Navigate to="/" />;
+  };
+};
+
 const AppContent = () => {
   const location = useLocation();
   const { loading } = useContext(AuthContext);
@@ -57,6 +74,9 @@ const AppContent = () => {
   const CrearInventarioWithLayout = withLayout(CrearInventarioPage);
   const EditarInventarioWithLayout = withLayout(EditarInventarioPage);
   const AjustesWithLayout = withLayout(Ajustes);
+  
+  // Proteger con permisos de admin
+  const GestionUsuariosWithAdmin = withLayout(withAdminCheck(GestionUsuarios));
 
   return (
     <>
@@ -72,6 +92,10 @@ const AppContent = () => {
         <Route path="/crear-inventario" element={<CrearInventarioWithLayout />} />
         <Route path="/editar-inventario/:id" element={<EditarInventarioWithLayout />} />
         <Route path="/ajustes" element={<AjustesWithLayout />} />
+        
+        {/* Nueva ruta para gestión de usuarios */}
+        <Route path="/usuarios" element={<GestionUsuariosWithAdmin />} />
+        
         <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="/password/reset" element={<ResetPassword />} />
         <Route path="/new-password/:token" element={<NewPassword />} />

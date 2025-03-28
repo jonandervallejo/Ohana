@@ -14,11 +14,18 @@ use App\Http\Controllers\CategoriaController;
 use App\Http\Controllers\StockController;
 use App\Http\Controllers\VentaController;
 
-
-// Rutas públicas
-Route::get('/usuarios', [UsuarioController::class, 'index']);
+// Rutas públicas de usuarios (acceso limitado)
 Route::get('/usuarios/contar-clientes', [UsuarioController::class, 'contarClientes']);
 Route::get('/usuarios/{id}', [UsuarioController::class, 'show']);
+Route::get('/usuarios', [UsuarioController::class, 'index']);
+
+Route::middleware('auth:sanctum')->group(function() {
+    Route::get('/usuarios', [UsuarioController::class, 'index']);
+    Route::post('/usuarios', [UsuarioController::class, 'store']);
+    Route::get('/usuarios/{id}', [UsuarioController::class, 'show']);
+    Route::put('/usuarios/{id}', [UsuarioController::class, 'update']);
+    Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy']);
+});
 
 // Rutas de productos
 Route::get('/productos', [ProductoController::class, 'index']);
@@ -74,3 +81,4 @@ Route::put('/ventas/{id}/cancelar', [VentaController::class, 'cancelar']);
 Route::get('/ventas-estadisticas', [VentaController::class, 'estadisticas']);
 Route::delete('/ventas/{id}', [VentaController::class, 'destroy']);
 
+Route::get('/usuarios/contar-clientes', [UsuarioController::class, 'contarClientes']);
