@@ -20,7 +20,7 @@ class UsuarioController extends BaseController
     const ROLE_CLIENTE = 3;
     
     /**
-     * Mostrar todos los usuarios (administradores y técnicos, excluyendo clientes)
+     * Mostrar todos los usuarios (incluyendo clientes)
      */
     public function index(Request $request)
     {
@@ -47,9 +47,9 @@ class UsuarioController extends BaseController
                 return response()->json(['message' => 'Acceso no autorizado por rol'], 403);
             }
             
-            // Si es admin, puede ver admin y técnicos
+            // Si es admin, puede ver todos los usuarios (admin, técnicos y clientes)
             if ($user->id_rol == self::ROLE_ADMIN) {
-                $usuarios = Usuario::whereIn('id_rol', [self::ROLE_ADMIN, self::ROLE_TECNICO])->get();
+                $usuarios = Usuario::all();
             } else {
                 // Si es técnico, solo ve a otros técnicos y a sí mismo
                 $usuarios = Usuario::where(function($query) use ($user) {
@@ -80,12 +80,47 @@ class UsuarioController extends BaseController
      */
     public function contarClientes()
     {
-        $clientesCount = Usuario::where('id_rol', 3)->count();
+        $clientesCount = Usuario::where('id_rol', self::ROLE_CLIENTE)->count();
         return response()->json(['total_clientes' => $clientesCount]);
     }
 
     /**
-     * Guardar un nuevo usuario (admin o técnico)
+     * Obtener listado de clientes
+     * Utilizado principalmente para propósitos administrativos
+     */
+    public function getClientes(Request $request)
+    {
+        try {
+            $user = $request->user();
+            
+            // Verificación adicional de autenticación
+            if (!$user) {
+                return response()->json(['message' => 'Acceso no autorizado'], 401);
+            }
+            
+            // Solo administradores pueden ver la lista completa de clientes
+            if ($user->id_rol != self::ROLE_ADMIN) {
+                return response()->json(['message' => 'Acceso no autorizado por rol'], 403);
+            }
+            
+            $clientes = Usuario::where('id_rol', self::ROLE_CLIENTE)->get();
+            
+            return response()->json($clientes);
+        } catch (\Exception $e) {
+            Log::error('Error al listar clientes', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+            
+            return response()->json([
+                'message' => 'Error al procesar la solicitud',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Guardar un nuevo usuario (admin, técnico o cliente)
      */
     public function store(Request $request)
     {
@@ -108,26 +143,32 @@ class UsuarioController extends BaseController
 
             $validator = Validator::make($request->all(), [
                 'nombre' => 'required|string|max:255',
-                'apellidos' => 'nullable|string|max:255',
+                'apellido1' => 'required|string|max:255',
+                'apellido2' => 'nullable|string|max:255',
                 'email' => 'required|string|email|max:255|unique:usuario',
                 'password' => 'required|string|min:6',
-                'id_rol' => 'required|integer|in:1,2', // Solo admin(1) y técnico(2)
+                'id_rol' => 'required|integer|in:1,2,3', // Admin(1), técnico(2) y cliente(3)
                 'telefono' => 'nullable|string|max:20',
-                // Quitamos validación de 'activo' ya que no existe en BD
             ]);
 
             if ($validator->fails()) {
                 return response()->json(['message' => $validator->errors()->first()], 422);
             }
 
+            // Ensure apellido1 is not null
+            $apellido1 = $request->apellido1;
+            if (empty($apellido1)) {
+                $apellido1 = '-'; // Default value if empty
+            }
+
             $usuario = new Usuario([
                 'nombre' => $request->nombre,
-                'apellidos' => $request->apellidos ?? '',
+                'apellido1' => $apellido1,
+                'apellido2' => $request->apellido2 ?? '',
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'id_rol' => $request->id_rol,
                 'telefono' => $request->telefono ?? null,
-                // Quitamos 'activo' ya que no existe en BD
             ]);
 
             $usuario->save();
@@ -193,7 +234,7 @@ class UsuarioController extends BaseController
     }
 
     /**
-     * Actualizar un usuario existente
+     * Actualizar un usuario existente (incluidos los clientes)
      */
     public function update(Request $request, $id)
     {
@@ -232,7 +273,8 @@ class UsuarioController extends BaseController
             // Validaciones
             $rules = [
                 'nombre' => 'sometimes|string|max:255',
-                'apellidos' => 'nullable|string|max:255',
+                'apellido1' => 'sometimes|string|max:255',
+                'apellido2' => 'nullable|string|max:255',
                 'email' => [
                     'sometimes', 
                     'string', 
@@ -248,9 +290,9 @@ class UsuarioController extends BaseController
                 $rules['password'] = 'string|min:6';
             }
             
-            // Solo admins pueden cambiar roles y solo a admin(1) o técnico(2)
+            // Solo admins pueden cambiar roles y a cualquiera de los 3 roles disponibles
             if ($user->id_rol == self::ROLE_ADMIN && $request->has('id_rol')) {
-                $rules['id_rol'] = 'integer|in:1,2';
+                $rules['id_rol'] = 'integer|in:1,2,3';
             }
             
             $validator = Validator::make($request->all(), $rules);
@@ -264,8 +306,13 @@ class UsuarioController extends BaseController
                 $usuario->nombre = $request->nombre;
             }
             
-            if ($request->has('apellidos')) {
-                $usuario->apellidos = $request->apellidos;
+            // Always set apellido1 when provided, default to - if empty
+            if ($request->has('apellido1')) {
+                $usuario->apellido1 = !empty($request->apellido1) ? $request->apellido1 : '-';
+            }
+            
+            if ($request->has('apellido2')) {
+                $usuario->apellido2 = $request->apellido2;
             }
             
             if ($request->filled('email')) {
@@ -283,8 +330,6 @@ class UsuarioController extends BaseController
             if ($request->has('telefono')) {
                 $usuario->telefono = $request->telefono;
             }
-            
-            // Quitamos la actualización del campo 'activo' ya que no existe en BD
             
             $usuario->save();
             
@@ -305,7 +350,7 @@ class UsuarioController extends BaseController
     }
 
     /**
-     * Eliminar un usuario
+     * Eliminar un usuario (incluidos los clientes)
      */
     public function destroy(Request $request, $id)
     {
