@@ -696,3 +696,465 @@ to {
     font-size: 0.85rem;
   }
 }
+
+/* Añade estos estilos al final de tu archivo CSS */
+
+.filtro-fechas.filtro-activo {
+  background-color: #e6f7ff;
+  border: 1px solid #91d5ff;
+  box-shadow: 0 0 5px rgba(24, 144, 255, 0.2);
+}
+
+.filtro-fechas.filtro-activo .fecha-header span {
+  color: #1890ff;
+  font-weight: bold;
+}
+
+.fecha-info {
+  font-size: 0.85rem;
+  color: #666;
+  margin-top: 5px;
+  text-align: right;
+}
+
+.error {
+  padding: 10px;
+  background-color: #fff1f0;
+  border-radius: 4px;
+  border: 1px solid #ffccc7;
+  color: #f5222d;
+  margin: 10px 0;
+}
+
+/* Add these styles to your existing CSS file */
+
+.fecha-dropdown {
+  position: relative;
+  margin-left: 10px;
+}
+
+.fecha-menu {
+  width: 300px;
+  padding: 15px;
+}
+
+.fecha-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.fecha-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.fecha-input {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: 100%;
+}
+
+.fecha-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+}
+
+.btn-aplicar,
+.btn-limpiar {
+  padding: 8px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-aplicar {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-limpiar {
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #ddd;
+}
+
+.btn-limpiar-todos {
+  margin-left: 10px;
+  padding: 8px 12px;
+  background-color: #f8f9fa;
+  color: #6c757d;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.active-filter {
+  background-color: #e3f2fd;
+  border-color: #007bff;
+}
+
+/* Replace the existing date filter styles with these improved ones */
+
+/* Date Filter Component - Enhanced Design */
+.fecha-dropdown {
+  position: relative;
+  margin-left: 10px;
+  flex: 1;
+  min-width: 220px;
+  z-index: 20;
+}
+
+.dropdown-toggle.fecha-toggle {
+  width: 100%;
+  padding: 12px 20px;
+  background-color: var(--bg-light);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 500;
+  color: var(--text-dark);
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.dropdown-toggle.fecha-toggle::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 4px;
+  background: linear-gradient(to bottom, var(--primary), var(--primary-dark));
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.dropdown-toggle.fecha-toggle:hover {
+  background-color: #f0f4f8;
+  border-color: var(--primary-light);
+}
+
+.dropdown-toggle.fecha-toggle:hover::before {
+  opacity: 1;
+}
+
+.dropdown-toggle.fecha-toggle.active-filter {
+  background-color: var(--primary-light);
+  border-color: var(--primary);
+  color: var(--primary);
+  font-weight: 600;
+  box-shadow: 0 3px 12px rgba(74, 111, 165, 0.12);
+}
+
+.dropdown-toggle.fecha-toggle.active-filter::before {
+  opacity: 1;
+}
+
+.fecha-toggle .fecha-icon {
+  margin-right: 10px;
+  display: inline-flex;
+}
+
+.arrow-down {
+  transition: transform 0.3s ease;
+}
+
+.dropdown-toggle.fecha-toggle:hover .arrow-down,
+.dropdown-toggle.fecha-toggle.active .arrow-down {
+  transform: translateY(2px);
+}
+
+.fecha-menu {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 0;
+  width: 340px;
+  padding: 20px;
+  background-color: var(--bg-white);
+  border-radius: 12px;
+  z-index: 100;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  border: 1px solid var(--border-color);
+  animation: dateMenuFadeIn 0.25s ease;
+}
+
+@keyframes dateMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.fecha-menu::before {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: 30px;
+  height: 12px;
+  width: 12px;
+  background-color: var(--bg-white);
+  border-left: 1px solid var(--border-color);
+  border-top: 1px solid var(--border-color);
+  transform: rotate(45deg);
+}
+
+.fecha-filter-container {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.fecha-filter-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin-bottom: 5px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.fecha-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fecha-input-group label {
+  font-weight: 500;
+  color: var(--text-dark);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.fecha-input-group label svg {
+  width: 16px;
+  height: 16px;
+  color: var(--primary);
+}
+
+.fecha-input {
+  padding: 12px 14px;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  width: 100%;
+  font-size: 14px;
+  background-color: var(--bg-light);
+  transition: all 0.3s ease;
+  color: var(--text-dark);
+}
+
+.fecha-input:hover {
+  border-color: var(--primary-light);
+}
+
+.fecha-input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(74, 111, 165, 0.15);
+}
+
+.fecha-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+  gap: 10px;
+}
+
+.btn-aplicar,
+.btn-limpiar {
+  padding: 12px 16px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-aplicar {
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  color: white;
+  flex-grow: 1;
+  border: none;
+  box-shadow: 0 4px 12px rgba(74, 111, 165, 0.2);
+}
+
+.btn-aplicar:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 14px rgba(74, 111, 165, 0.25);
+  background: linear-gradient(135deg, #5a80b6 0%, #395d88 100%);
+}
+
+.btn-aplicar:active {
+  transform: translateY(0px);
+  box-shadow: 0 3px 8px rgba(74, 111, 165, 0.15);
+}
+
+.btn-limpiar {
+  background-color: transparent;
+  color: var(--text-light);
+  border: 1px solid var(--border-color);
+  padding: 12px 14px;
+}
+
+.btn-limpiar:hover {
+  background-color: #f1f5f9;
+  color: var(--text-dark);
+  border-color: #cbd5e1;
+}
+
+.btn-limpiar:active {
+  transform: translateY(1px);
+}
+
+.btn-limpiar-todos {
+  margin-left: 10px;
+  padding: 10px 16px;
+  background-color: white;
+  color: var(--text-dark);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius);
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-limpiar-todos:hover {
+  background-color: #f8f9fa;
+  border-color: #cbd5e1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.05);
+}
+
+.btn-limpiar-todos:active {
+  transform: translateY(1px);
+  box-shadow: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 576px) {
+  .fecha-dropdown {
+    width: 100%;
+    margin-left: 0;
+  }
+  
+  .fecha-menu {
+    width: 100%;
+    left: 0;
+    right: 0;
+  }
+  
+  .fecha-menu::before {
+    left: 20px;
+  }
+}
+
+/* Añadir estos estilos al final del archivo */
+
+/* Spinner de carga */
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  margin: 20px 0;
+}
+
+.spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.spinner i {
+  color: var(--primary);
+  font-size: 48px;
+  animation: spin 1s linear infinite;
+}
+
+.spinner p {
+  margin-top: 15px;
+  font-size: 16px;
+  color: #666;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mensaje de error */
+.error-container {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-left: 5px solid #dc3545;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.error-container i {
+  font-size: 24px;
+}
+
+.error-container p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* Mensaje de sin resultados */
+.sin-resultados {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 20px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  margin: 20px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.sin-resultados i {
+  font-size: 3rem;
+  color: #b0bec5;
+  margin-bottom: 15px;
+}
+
+.sin-resultados p {
+  font-size: 1.1rem;
+  color: #64748b;
+  margin: 0;
+}

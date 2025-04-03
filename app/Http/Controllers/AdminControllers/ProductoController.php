@@ -74,11 +74,33 @@ class ProductoController extends Controller
 
     public function index(Request $request)
     {
-        $limit = $request->input('limit', 6);
-        $productos = Producto::with(['categoria', 'stocks'])
-            ->paginate($limit);
-    
-        return response()->json($productos);
+        try {
+            $query = Producto::with(['categoria', 'stocks']);
+            
+            // Aplicar filtros de fecha si están presentes
+            if ($request->has('fecha_inicio') && !empty($request->fecha_inicio)) {
+                $query->whereDate('created_at', '>=', $request->fecha_inicio);
+                Log::info('Filtrando desde: ' . $request->fecha_inicio);
+            }
+            
+            if ($request->has('fecha_fin') && !empty($request->fecha_fin)) {
+                $query->whereDate('created_at', '<=', $request->fecha_fin);
+                Log::info('Filtrando hasta: ' . $request->fecha_fin);
+            }
+            
+            $limit = $request->input('per_page', 6);
+            $productos = $query->paginate($limit);
+            
+            // Log para debugging
+            Log::info('Consulta SQL productos: ' . $query->toSql());
+            Log::info('Parámetros recibidos: ' . json_encode($request->all()));
+            
+            return response()->json($this->transformProductImages($productos));
+        } catch (\Exception $e) {
+            Log::error('Error en ProductoController@index: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Error al obtener productos'], 500);
+        }
     }
 
     public function show($id)
@@ -92,12 +114,34 @@ class ProductoController extends Controller
 
     public function productosPorCategoria(Request $request, $id_categoria)
     {
-        $limit = $request->input('limit', 6);
-        $productos = Producto::with(['categoria', 'stocks'])
-            ->where('id_categoria', $id_categoria)
-            ->paginate($limit);
+        try {
+            $query = Producto::with(['categoria', 'stocks'])
+                ->where('id_categoria', $id_categoria);
+                
+            // Aplicar filtros de fecha si están presentes
+            if ($request->has('fecha_inicio') && !empty($request->fecha_inicio)) {
+                $query->whereDate('created_at', '>=', $request->fecha_inicio);
+                Log::info('Filtrando por categoría desde: ' . $request->fecha_inicio);
+            }
             
-        return response()->json($this->transformProductImages($productos));
+            if ($request->has('fecha_fin') && !empty($request->fecha_fin)) {
+                $query->whereDate('created_at', '<=', $request->fecha_fin);
+                Log::info('Filtrando por categoría hasta: ' . $request->fecha_fin);
+            }
+            
+            $limit = $request->input('per_page', 6);
+            $productos = $query->paginate($limit);
+            
+            // Log para debugging
+            Log::info('Consulta SQL productos por categoría: ' . $query->toSql());
+            Log::info('Categoría: ' . $id_categoria);
+                
+            return response()->json($this->transformProductImages($productos));
+        } catch (\Exception $e) {
+            Log::error('Error en ProductoController@productosPorCategoria: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Error al obtener productos por categoría'], 500);
+        }
     }
 
     public function store(Request $request)
@@ -444,33 +488,25 @@ class ProductoController extends Controller
     public function obtenerProductosConStock()
     {
         try {
-            // Obtener todos los productos
-            $productos = Producto::all();
-
-            // Obtener la información de stock
-            $stocks = Stock::all();
-
-            // Crear un array asociativo de stock con el id del producto como clave
-            $stockMap = [];
-            foreach ($stocks as $stock) {
-                $stockMap[$stock->producto_id] = $stock->cantidad;
-            }
-
-            // Combinar la información de stock con los productos
-            $productosConStock = $productos->map(function ($producto) use ($stockMap) {
-                $producto->stock = $stockMap[$producto->id] ?? 0;
-                return $producto;
+            // Obtener productos con sus stocks
+            $productos = Producto::with(['categoria', 'stocks'])->get();
+            
+            // Filtrar solo productos que tienen al menos un registro de stock
+            $productosConStock = $productos->filter(function ($producto) {
+                return $producto->stocks->isNotEmpty();
             });
-
+            
+            // Transformar las imágenes de los productos
+            $productosConStock = $this->transformProductImages($productosConStock->values());
+            
             return response()->json($productosConStock);
         } catch (\Exception $e) {
             // Log del error para depuración
-            \Log::error('Error al obtener productos con stock: ' . $e->getMessage() . "\n" . $e->getTraceAsString());
-
+            Log::error('Error al obtener productos con stock: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            
             // Devolver un array vacío en caso de error
             return response()->json([]);
         }
     }
 }
-
-

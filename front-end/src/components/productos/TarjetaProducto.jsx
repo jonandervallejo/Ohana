@@ -2,16 +2,13 @@ import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './css/TarjetaProducto.css';
 import DetalleProductoModal from './DetalleProductoModal';
-import ConfirmacionModal from '../ui/CofirmacionModal';
 import Toast from '../ui/Toast';
-import { eliminarProducto } from '../../services/productoService';
 
 const API_BASE_URL = 'http://88.15.26.49:8000';
 
 const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, onProductoEliminado }) => {
   const navigate = useNavigate();
   const [mostrarDetalles, setMostrarDetalles] = useState(false);
-  const [mostrarConfirmacion, setMostrarConfirmacion] = useState(false);
   const [mostrarToast, setMostrarToast] = useState(false);
   const [mensajeToast, setMensajeToast] = useState('');
   const [tipoToast, setTipoToast] = useState('success');
@@ -24,31 +21,9 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
   };
   
   const handleEliminar = () => {
-    setMostrarConfirmacion(true);
-  };
-  
-  const eliminarProductoHandler = async () => {
-    try {
-      await eliminarProducto(producto.id);
-      
-      setMensajeToast('Producto eliminado correctamente');
-      setTipoToast('success');
-      setMostrarToast(true);
-      
-      if (onProductoEliminado) {
-        setTimeout(() => {
-          onProductoEliminado(producto.id);
-        }, 1000);
-      }
-      
-    } catch (error) {
-      console.error('Error al eliminar producto:', error);
-      
-      setMensajeToast('Error al eliminar: ' + error.message);
-      setTipoToast('error');
-      setMostrarToast(true);
-    } finally {
-      setMostrarConfirmacion(false);
+    // En lugar de mostrar su propio modal, simplemente llama a la función del padre
+    if (onProductoEliminado) {
+      onProductoEliminado(producto);
     }
   };
 
@@ -105,8 +80,6 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
             )}
           </div>
         )}
-
-        
         
         <div className="info-producto">
           <h3>{productoMostrado.nombre}</h3>
@@ -136,14 +109,6 @@ const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, o
           />
         )}
       </div>
-      
-      {mostrarConfirmacion && (
-        <ConfirmacionModal 
-          mensaje={`¿Estás seguro de eliminar el producto "${producto.nombre}"?`}
-          onConfirm={eliminarProductoHandler}
-          onCancel={() => setMostrarConfirmacion(false)}
-        />
-      )}
       
       <Toast 
         mensaje={mensajeToast}

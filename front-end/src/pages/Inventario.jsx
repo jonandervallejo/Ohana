@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import ReactPaginate from 'react-paginate';
 import { Link } from 'react-router-dom';
 import { obtenerInventarios, eliminarInventario } from '../services/productoService';
 import Toast from '../components/ui/Toast';
 import ConfirmacionModal from '../components/ui/CofirmacionModal';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './css/Inventario.css';
 
 const Inventario = () => {
@@ -15,7 +15,6 @@ const Inventario = () => {
   const [paginaActual, setPaginaActual] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(1);
   const [inventariosPorPagina] = useState(4);
-  const [windowWidth, setWindowWidth] = useState(window.innerWidth);
   const [confirmarEliminacion, setConfirmarEliminacion] = useState(null);
 
   const [toastInfo, setToastInfo] = useState({
@@ -23,17 +22,6 @@ const Inventario = () => {
     mensaje: '',
     tipo: 'success'
   });
-
-  useEffect(() => {
-    const handleResize = () => {
-      setWindowWidth(window.innerWidth);
-    };
-    
-    window.addEventListener('resize', handleResize);
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
-  }, []);
 
   useEffect(() => {
     const cargarInventarios = async () => {
@@ -52,7 +40,7 @@ const Inventario = () => {
     };
 
     cargarInventarios();
-  }, []);
+  }, [inventariosPorPagina]);
 
   useEffect(() => {
     if (busqueda.trim() === '') {
@@ -64,6 +52,14 @@ const Inventario = () => {
       );
       setInventariosFiltrados(resultados);
     }
+    
+    // Actualizar el total de páginas cuando cambia el filtro
+    setTotalPaginas(Math.ceil(
+      (busqueda.trim() === '' ? inventarios.length : inventariosFiltrados.length) / inventariosPorPagina
+    ));
+    
+    // Reset a la primera página cuando cambia el filtro
+    setPaginaActual(0);
   }, [busqueda, inventarios]);
 
   const handleConfirmarEliminacion = (inventario) => {
@@ -106,15 +102,41 @@ const Inventario = () => {
   };
 
   const handlePageClick = (data) => {
-    setPaginaActual(data.selected);
+    // Asegúrate de que no navegamos a páginas inválidas
+    if (data.selected >= 0 && data.selected < totalPaginas) {
+      setPaginaActual(data.selected);
+      window.scrollTo(0, 0); // Scroll al inicio al cambiar de página
+    }
   };
 
   const indiceUltimoInventario = (paginaActual + 1) * inventariosPorPagina;
   const indicePrimerInventario = indiceUltimoInventario - inventariosPorPagina;
   const inventariosActuales = inventariosFiltrados.slice(indicePrimerInventario, indiceUltimoInventario);
+  const totalInventarios = inventariosFiltrados.length;
 
-  const pageRangeDisplayed = windowWidth < 768 ? 1 : 5;
-  const marginPagesDisplayed = windowWidth < 768 ? 1 : 2;
+  if (cargando) {
+    return (
+      <div className="container mt-4 text-center">
+        <div className="spinner-container">
+          <div className="spinner">
+            <i className="fas fa-spinner fa-spin fa-3x"></i>
+            <p className="mt-2">Cargando inventarios...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mt-4">
+        <div className="error-container">
+          <i className="fas fa-exclamation-triangle"></i>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="container mt-4">
@@ -146,11 +168,8 @@ const Inventario = () => {
       </div>
 
       <h2 className="inventory-subtitle">Inventarios Existentes</h2>
-      {cargando ? (
-        <div className="cargando">Cargando inventarios...</div>
-      ) : error ? (
-        <div className="error">{error}</div>
-      ) : (
+      
+      {inventariosActuales.length > 0 ? (
         <>
           <div className="table-responsive">
             <table className="table table-striped">
@@ -164,64 +183,129 @@ const Inventario = () => {
                 </tr>
               </thead>
               <tbody>
-                {inventariosActuales.length > 0 ? (
-                  inventariosActuales.map((inventario) => (
-                    <tr key={inventario.id}>
-                      <td>{inventario.producto.nombre}</td>
-                      <td>{inventario.talla}</td>
-                      <td>{inventario.color}</td>
-                      <td>{inventario.stock}</td>
-                      <td>
-                        <div className="btn-group">
-                          <Link
-                            to={`/editar-inventario/${inventario.id}`}
-                            className="btn btn-warning btn-sm"
-                            title="Editar"
-                          >
-                            <i className="fas fa-edit"></i>
-                          </Link>
-                          <button
-                            className="btn btn-danger btn-sm"
-                            onClick={() => handleConfirmarEliminacion(inventario)}
-                            title="Eliminar"
-                          >
-                            <i className="fas fa-trash-alt"></i>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="text-center">
-                      No hay inventarios disponibles
+                {inventariosActuales.map((inventario) => (
+                  <tr key={inventario.id}>
+                    <td>{inventario.producto.nombre}</td>
+                    <td>{inventario.talla}</td>
+                    <td>{inventario.color}</td>
+                    <td>{inventario.stock}</td>
+                    <td>
+                      <div className="btn-group">
+                        <Link
+                          to={`/editar-inventario/${inventario.id}`}
+                          className="btn btn-warning btn-sm"
+                          title="Editar"
+                        >
+                          <i className="fas fa-edit"></i>
+                        </Link>
+                        <button
+                          className="btn btn-danger btn-sm"
+                          onClick={() => handleConfirmarEliminacion(inventario)}
+                          title="Eliminar"
+                        >
+                          <i className="fas fa-trash-alt"></i>
+                        </button>
+                      </div>
                     </td>
                   </tr>
-                )}
+                ))}
               </tbody>
             </table>
           </div>
+          
           <div className="pagination-container">
-            <ReactPaginate
-              previousLabel={'←'}
-              nextLabel={'→'}
-              breakLabel={'...'}
-              breakClassName={'break-me'}
-              pageCount={totalPaginas}
-              marginPagesDisplayed={marginPagesDisplayed}
-              pageRangeDisplayed={pageRangeDisplayed}
-              onPageChange={handlePageClick}
-              containerClassName={'pagination'}
-              subContainerClassName={'pages pagination'}
-              activeClassName={'active'}
-              previousClassName={'pagination-prev'}
-              nextClassName={'pagination-next'}
-              pageLinkClassName={'pagination-link'}
-              previousLinkClassName={'pagination-link'}
-              nextLinkClassName={'pagination-link'}
-            />
+            <div className="pagination">
+              <button 
+                className="pagination-button"
+                onClick={() => handlePageClick({selected: paginaActual - 1})}
+                disabled={paginaActual === 0}
+              >
+                <FaChevronLeft />
+              </button>
+              
+              {/* Calculamos qué páginas mostrar para evitar duplicados */}
+              {(() => {
+                // Determinamos el rango de páginas a mostrar (máximo 5)
+                let startPage = Math.max(0, Math.min(paginaActual - 2, totalPaginas - 5));
+                let endPage = Math.min(startPage + 4, totalPaginas - 1);
+                
+                // Si no tenemos suficientes páginas al final, ajustamos el inicio
+                if (endPage - startPage < 4) {
+                  startPage = Math.max(0, endPage - 4);
+                }
+                
+                // Crear un array con los números de página a mostrar
+                const pages = [];
+                
+                // Primera página y elipsis si no es visible en el rango actual
+                if (startPage > 0) {
+                  pages.push(
+                    <button
+                      key="first"
+                      className="pagination-button"
+                      onClick={() => handlePageClick({selected: 0})}
+                    >
+                      1
+                    </button>
+                  );
+                  
+                  if (startPage > 1) {
+                    pages.push(<span key="ellipsis-start" className="pagination-ellipsis">...</span>);
+                  }
+                }
+                
+                // Botones del rango principal
+                for (let i = startPage; i <= endPage; i++) {
+                  pages.push(
+                    <button
+                      key={i}
+                      className={`pagination-button ${paginaActual === i ? 'active' : ''}`}
+                      onClick={() => handlePageClick({selected: i})}
+                    >
+                      {i + 1}
+                    </button>
+                  );
+                }
+                
+                // Última página y elipsis si no es visible en el rango actual
+                if (endPage < totalPaginas - 1) {
+                  if (endPage < totalPaginas - 2) {
+                    pages.push(<span key="ellipsis-end" className="pagination-ellipsis">...</span>);
+                  }
+                  
+                  pages.push(
+                    <button
+                      key="last"
+                      className="pagination-button"
+                      onClick={() => handlePageClick({selected: totalPaginas - 1})}
+                    >
+                      {totalPaginas}
+                    </button>
+                  );
+                }
+                
+                return pages;
+              })()}
+              
+              <button 
+                className="pagination-button"
+                onClick={() => handlePageClick({selected: paginaActual + 1})}
+                disabled={paginaActual === totalPaginas - 1}
+              >
+                <FaChevronRight />
+              </button>
+            </div>
+            
+            <div className="pagination-info">
+              Mostrando {paginaActual * inventariosPorPagina + 1}-{Math.min((paginaActual + 1) * inventariosPorPagina, totalInventarios)} de {totalInventarios} inventarios
+            </div>
           </div>
         </>
+      ) : (
+        <div className="sin-resultados">
+          <i className="fas fa-box-open"></i>
+          <p>No hay inventarios disponibles con los filtros aplicados</p>
+        </div>
       )}
 
       {confirmarEliminacion && (

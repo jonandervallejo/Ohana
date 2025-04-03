@@ -658,3 +658,95 @@
   background-color: rgba(245, 158, 11, 0.15);
   color: var(--warning-color);
 }
+
+/* Spinner de carga con Font Awesome */
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: var(--box-shadow);
+  margin: 20px 0;
+}
+
+.spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.spinner i {
+  color: var(--primary-color);
+  font-size: 48px;
+  animation: spin 1s linear infinite;
+}
+
+.spinner p {
+  margin-top: 15px;
+  font-size: 16px;
+  color: #666;
+}
+
+/* Updated error container */
+.error-container {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-left: 5px solid var(--danger-color);
+  box-shadow: var(--box-shadow);
+}
+
+.error-container i {
+  font-size: 24px;
+}
+
+.error-container p {
+  margin: 0;
+  font-size: 16px;
+}
+
+/* "No results" message with icon */
+.sin-resultados {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 20px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  margin: 20px 0;
+  box-shadow: var(--box-shadow);
+  text-align: center;
+  border: 1px solid var(--gray-200);
+}
+
+.sin-resultados i {
+  font-size: 3rem;
+  color: var(--gray-400);
+  margin-bottom: 15px;
+}
+
+.sin-resultados p {
+  font-size: 1.1rem;
+  color: var(--gray-600);
+  margin: 0;
+}
+
+/* Remove the old loading style */
+.loading {
+  display: none;
+}
+
+.loading-spinner {
+  display: none;
+}

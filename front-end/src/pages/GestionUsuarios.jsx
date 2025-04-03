@@ -419,6 +419,30 @@ const GestionUsuarios = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="gestion-usuarios-container">
+        <div className="spinner-container">
+          <div className="spinner">
+            <i className="fas fa-spinner fa-spin fa-3x"></i>
+            <p className="mt-2">Cargando usuarios...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !usuarios.length) {
+    return (
+      <div className="gestion-usuarios-container">
+        <div className="error-container">
+          <i className="fas fa-exclamation-triangle"></i>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="gestion-usuarios-container">
       <div className="gestion-header">
@@ -465,9 +489,9 @@ const GestionUsuarios = () => {
       </div>
       
       {error && (
-        <div className="error-message">
-          <FaExclamationTriangle style={{ marginRight: '8px' }} />
-          {error}
+        <div className="error-container">
+          <i className="fas fa-exclamation-triangle"></i>
+          <p>{error}</p>
         </div>
       )}
       
@@ -478,79 +502,73 @@ const GestionUsuarios = () => {
         </div>
       )}
       
-      {loading ? (
-        <div className="loading">
-          <div className="loading-spinner"></div>
-          <p>Cargando usuarios...</p>
+      {filteredUsuarios.length === 0 ? (
+        <div className="sin-resultados">
+          <i className="fas fa-users-slash"></i>
+          <p>
+            {(busqueda || filtroRol !== 'todos') ? 
+              'No se encontraron usuarios que coincidan con los filtros' : 
+              'No hay usuarios para mostrar'
+            }
+          </p>
         </div>
       ) : (
         <>
-          {filteredUsuarios.length === 0 ? (
-            <div className="no-results">
-              {(busqueda || filtroRol !== 'todos') ? 
-                'No se encontraron usuarios que coincidan con los filtros' : 
-                'No hay usuarios para mostrar'
-              }
-            </div>
-          ) : (
-            <>
-              <div className="usuarios-table-container">
-                <table className="usuarios-table">
-                  <thead>
-                    <tr>
-                      <th>Nombre</th>
-                      <th>Email</th>
-                      <th>Teléfono</th>
-                      <th>Rol</th>
-                      {isAdmin() && <th>Acciones</th>}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {currentUsers.map(user => (
-                      <tr key={user.id}>
-                        <td>{`${user.nombre || ''} ${user.apellido1 || ''} ${user.apellido2 || ''}`}</td>
-                        <td>{user.email}</td>
-                        <td>{user.telefono || 'N/A'}</td>
-                        <td>
-                          {user.id_rol === ROLE_ADMIN ? (
-                            <span className="badge-admin">{renderRol(user.id_rol)}</span>
-                          ) : user.id_rol === ROLE_TECNICO ? (
-                            <span className="badge-tecnico">{renderRol(user.id_rol)}</span>
-                          ) : (
-                            <span className="badge-cliente">{renderRol(user.id_rol)}</span>
-                          )}
-                        </td>
-                        {isAdmin() && (
-                          <td className="actions-cell">
-                            <button 
-                              className="btn-action edit"
-                              onClick={() => handleOpenEditForm(user)}
-                              title="Editar usuario"
-                              disabled={actionLoading}
-                            >
-                              <FaEdit />
-                            </button>
-                            
-                            <button 
-                              className="btn-action delete"
-                              onClick={() => confirmarEliminarUsuario(user.id, user.nombre)}
-                              title="Eliminar usuario"
-                              disabled={actionLoading || user.id === usuario.id}
-                            >
-                              <FaTrash />
-                            </button>
-                          </td>
-                        )}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Pagination */}
-              {filteredUsuarios.length > itemsPerPage && <Pagination />}
-            </>
-          )}
+          <div className="usuarios-table-container">
+            <table className="usuarios-table">
+              <thead>
+                <tr>
+                  <th>Nombre</th>
+                  <th>Email</th>
+                  <th>Teléfono</th>
+                  <th>Rol</th>
+                  {isAdmin() && <th>Acciones</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {currentUsers.map(user => (
+                  <tr key={user.id}>
+                    <td>{`${user.nombre || ''} ${user.apellido1 || ''} ${user.apellido2 || ''}`}</td>
+                    <td>{user.email}</td>
+                    <td>{user.telefono || 'N/A'}</td>
+                    <td>
+                      {user.id_rol === ROLE_ADMIN ? (
+                        <span className="badge-admin">{renderRol(user.id_rol)}</span>
+                      ) : user.id_rol === ROLE_TECNICO ? (
+                        <span className="badge-tecnico">{renderRol(user.id_rol)}</span>
+                      ) : (
+                        <span className="badge-cliente">{renderRol(user.id_rol)}</span>
+                      )}
+                    </td>
+                    {isAdmin() && (
+                      <td className="actions-cell">
+                        <button 
+                          className="btn-action edit"
+                          onClick={() => handleOpenEditForm(user)}
+                          title="Editar usuario"
+                          disabled={actionLoading}
+                        >
+                          <FaEdit />
+                        </button>
+                        
+                        <button 
+                          className="btn-action delete"
+                          onClick={() => confirmarEliminarUsuario(user.id, user.nombre)}
+                          title="Eliminar usuario"
+                          disabled={actionLoading || user.id === usuario.id}
+                        >
+                          <FaTrash />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          
+          {/* Pagination */}
+          {filteredUsuarios.length > itemsPerPage && <Pagination />}
         </>
       )}
       

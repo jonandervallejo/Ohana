@@ -514,82 +514,83 @@ useEffect(() => {
             <h2>Editar Producto: {producto?.nombre}</h2>
             
             <form onSubmit={handleSubmit} encType="multipart/form-data">
-              {/* Campos de formulario existentes */}
-              <div className="form-group">
-                <label htmlFor="nombre">Nombre *</label>
-                <input
-                  type="text"
-                  id="nombre"
-                  name="nombre"
-                  value={formData.nombre}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="descripcion">Descripción *</label>
-                <textarea
-                  id="descripcion"
-                  name="descripcion"
-                  value={formData.descripcion}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="precio">Precio *</label>
-                <input
-                  type="number"
-                  id="precio"
-                  name="precio"
-                  value={formData.precio}
-                  onChange={handleChange}
-                  step="0.01"
-                  min="0"
-                  required
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="id_categoria">Categoría *</label>
-                <select
-                  id="id_categoria"
-                  name="id_categoria"
-                  value={formData.id_categoria}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Selecciona una categoría</option>
-                  {categorias.map(categoria => (
-                    <option key={categoria.id} value={categoria.id}>
-                      {categoria.nombre_cat}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="tipo">Tipo</label>
-                <input
-                  type="text"
-                  id="tipo"
-                  name="tipo"
-                  value={formData.tipo}
-                  onChange={handleChange}
-                />
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="talla">Talla</label>
-                <input
-                  type="text"
-                  id="talla"
-                  name="talla"
-                  value={formData.talla}
-                  onChange={handleChange}
-                />
+              <div className="form-grid">
+                <div className="form-group">
+                  <label htmlFor="nombre">Nombre *</label>
+                  <input
+                    type="text"
+                    id="nombre"
+                    name="nombre"
+                    value={formData.nombre}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="precio">Precio *</label>
+                  <input
+                    type="number"
+                    id="precio"
+                    name="precio"
+                    value={formData.precio}
+                    onChange={handleChange}
+                    step="0.01"
+                    min="0"
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="id_categoria">Categoría *</label>
+                  <select
+                    id="id_categoria"
+                    name="id_categoria"
+                    value={formData.id_categoria}
+                    onChange={handleChange}
+                    required
+                  >
+                    <option value="">Selecciona una categoría</option>
+                    {categorias.map(categoria => (
+                      <option key={categoria.id} value={categoria.id}>
+                        {categoria.nombre_cat}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="tipo">Tipo</label>
+                  <input
+                    type="text"
+                    id="tipo"
+                    name="tipo"
+                    value={formData.tipo}
+                    onChange={handleChange}
+                  />
+                </div>
+                
+                <div className="form-group full-width">
+                  <label htmlFor="descripcion">Descripción *</label>
+                  <textarea
+                    id="descripcion"
+                    name="descripcion"
+                    value={formData.descripcion}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                
+                <div className="form-group">
+                  <label htmlFor="talla">Talla</label>
+                  <input
+                    type="text"
+                    id="talla"
+                    name="talla"
+                    value={formData.talla}
+                    onChange={handleChange}
+                  />
+                </div>
               </div>
               
               <div className="images-section">
@@ -599,8 +600,8 @@ useEffect(() => {
                   <label className="section-label">Imagen Principal</label>
 
                   <p className="drag-instructions">
-                        <i className="fas fa-info-circle"></i> Si cambias la imagen Principal, esta se eliminará.
-                 </p>
+                    <i className="fas fa-info-circle"></i> Si cambias la imagen Principal, esta se eliminará.
+                  </p>
                   
                   {mainImage ? (
                     <div className="main-image-container">

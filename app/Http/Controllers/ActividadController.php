@@ -66,7 +66,6 @@ class ActividadController extends Controller
                 }
             }
             
-            // Si tienes una tabla de actividades específica, también puedes obtenerlas
             if (class_exists('App\Models\Actividad')) {
                 try {
                     $actividadesRegistradas = Actividad::where('tipo', 'producto')

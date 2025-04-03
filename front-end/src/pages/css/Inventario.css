@@ -878,3 +878,195 @@
     font-size: 0.85rem;
   }
 }
+
+/* Añadir estos estilos al final del archivo para la paginación personalizada */
+
+/* Contenedor de la paginación con mejor disposición */
+.pagination-container {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Botones de paginación con estilo consistente */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+}
+
+.pagination-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid #d1d5db;
+  background-color: white;
+  color: #374151;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #f3f4f6;
+  border-color: #9ca3af;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.pagination-button.active {
+  background: linear-gradient(135deg, #4a6fa5 0%, #304c70 100%);
+  color: white;
+  border-color: #4a6fa5;
+  box-shadow: 0 2px 4px rgba(74, 111, 165, 0.25);
+}
+
+.pagination-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination-ellipsis {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  color: #6b7280;
+}
+
+.pagination-info {
+  margin-top: 0.5rem;
+  color: #4b5563;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+/* Eliminar estilos antiguos de ReactPaginate si están presentes */
+.pagination-prev,
+.pagination-next,
+.pagination-link,
+.pagination li,
+.break-me,
+.pages,
+.previous,
+.next {
+  display: none !important;
+}
+
+/* Estilos específicos para móvil */
+@media screen and (max-width: 480px) {
+  .pagination {
+    gap: 3px;
+  }
+  
+  .pagination-button {
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
+  }
+  
+  .pagination-ellipsis {
+    width: 32px;
+  }
+  
+  .pagination-info {
+    font-size: 0.8rem;
+  }
+}
+
+/* Añadir estos estilos para el spinner al archivo existente */
+
+/* Spinner de carga */
+.spinner-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  margin: 20px 0;
+}
+
+.spinner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.spinner i {
+  color: var(--primary, #4a6fa5);
+  font-size: 48px;
+  animation: spin 1s linear infinite;
+}
+
+.spinner p {
+  margin-top: 15px;
+  font-size: 16px;
+  color: #666;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Mensaje de error */
+.error-container {
+  background-color: #f8d7da;
+  color: #721c24;
+  padding: 20px;
+  border-radius: 8px;
+  margin: 20px 0;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  border-left: 5px solid #dc3545;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+}
+
+.error-container i {
+  font-size: 24px;
+}
+
+.error-container p {
+  margin: 0;
+  font-size: 16px;
+}
+
+.sin-resultados {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 50px 20px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  margin: 20px 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  text-align: center;
+  border: 1px solid #e2e8f0;
+}
+
+.sin-resultados i {
+  font-size: 3rem;
+  color: #b0bec5;
+  margin-bottom: 15px;
+}
+
+.sin-resultados p {
+  font-size: 1.1rem;
+  color: #64748b;
+  margin: 0;
+}

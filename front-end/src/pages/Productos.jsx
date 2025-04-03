@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import ReactPaginate from 'react-paginate';
 import { obtenerProductos, obtenerProductosPorCategoria, eliminarProducto } from '../services/productoService';
 import TarjetaProducto from '../components/productos/TarjetaProducto';
 import ConfirmacionModal from '../components/ui/CofirmacionModal';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './css/Productos.css';
 
 const API_URL = 'http://88.15.26.49:8000/api';
@@ -20,42 +20,70 @@ const ProductosPage = () => {
   const [mostrarCategorias, setMostrarCategorias] = useState(false);
   const [paginaActual, setPaginaActual] = useState(0);
   const [totalPaginas, setTotalPaginas] = useState(1);
-  const [filtroStock, setFiltroStock] = useState(false);
+  const [totalProductos, setTotalProductos] = useState(0);
+  const [procesandoEliminacion, setProcesandoEliminacion] = useState(false);
+  const [necesitaRecargar, setNecesitaRecargar] = useState(false);
+  
+  // Estados para el filtro de fecha
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
+  const [mostrarFiltroFecha, setMostrarFiltroFecha] = useState(false);
   
   const [modalConfirmacion, setModalConfirmacion] = useState({
     mostrar: false,
     producto: null
   });
 
-  useEffect(() => {
-    const cargarProductos = async () => {
-      try {
-        setCargando(true);
-        let response;
-        
-        if (categoriaSeleccionada) {
-          response = await obtenerProductosPorCategoria(categoriaSeleccionada, paginaActual + 1, 6);
-        } else {
-          response = await obtenerProductos(paginaActual + 1, 6);
-        }
-        
-        if (response && response.data) {
-          setProductos(response.data);
-          setTotalPaginas(response.last_page);
-        } else {
-          setProductos([]);
-          setTotalPaginas(1);
-        }
-      } catch (err) {
-        setError('Error al cargar los productos');
-        console.error(err);
-      } finally {
-        setCargando(false);
+  const cargarProductos = async () => {
+    try {
+      setCargando(true);
+      let params = {
+        page: paginaActual + 1,
+        per_page: 6
+      };
+      
+      // Agregar filtros de fecha si están presentes
+      if (fechaInicio) {
+        params.fecha_inicio = fechaInicio;
       }
-    };
+      
+      if (fechaFin) {
+        params.fecha_fin = fechaFin;
+      }
+      
+      let response;
+      if (categoriaSeleccionada) {
+        response = await obtenerProductosPorCategoria(categoriaSeleccionada, params);
+      } else {
+        response = await obtenerProductos(params);
+      }
+      
+      if (response && response.data) {
+        setProductos(response.data);
+        setTotalPaginas(response.last_page);
+        
+        // Actualizar el total de productos usando el campo 'total' de la respuesta
+        if (response.total) {
+          setTotalProductos(response.total);
+        }
+      } else {
+        setProductos([]);
+        setTotalPaginas(1);
+      }
+      setError(null);
+    } catch (err) {
+      setError('Error al cargar los productos');
+      console.error('Error completo:', err);
+    } finally {
+      setCargando(false);
+      setNecesitaRecargar(false);
+    }
+  };
 
+  // Efecto para cargar productos cuando cambian los filtros o cuando se necesita recargar
+  useEffect(() => {
     cargarProductos();
-  }, [categoriaSeleccionada, paginaActual]);
+  }, [categoriaSeleccionada, paginaActual, necesitaRecargar]);
 
   useEffect(() => {
     const fetchCategorias = async () => {
@@ -81,12 +109,8 @@ const ProductosPage = () => {
       );
     }
 
-    if (filtroStock) {
-      resultados = resultados.filter(producto => producto.stock > 0);
-    }
-
     setProductosFiltrados(resultados);
-  }, [busqueda, productos, filtroStock]);
+  }, [busqueda, productos]);
 
   const filtrarPorCategoria = (idCategoria) => {
     setCategoriaSeleccionada(idCategoria);
@@ -97,13 +121,35 @@ const ProductosPage = () => {
   const limpiarFiltros = () => {
     setCategoriaSeleccionada(null);
     setBusqueda('');
+    setFechaInicio('');
+    setFechaFin('');
     setPaginaActual(0);
     setMostrarCategorias(false);
-    setFiltroStock(false);
+    setMostrarFiltroFecha(false);
+    setNecesitaRecargar(true);
   };
   
   const toggleCategorias = () => {
     setMostrarCategorias(!mostrarCategorias);
+    if (mostrarFiltroFecha) setMostrarFiltroFecha(false);
+  };
+  
+  const toggleFiltroFecha = () => {
+    setMostrarFiltroFecha(!mostrarFiltroFecha);
+    if (mostrarCategorias) setMostrarCategorias(false);
+  };
+  
+  const aplicarFiltroFecha = () => {
+    setPaginaActual(0);
+    setMostrarFiltroFecha(false);
+    setNecesitaRecargar(true);
+  };
+  
+  const limpiarFiltroFecha = () => {
+    setFechaInicio('');
+    setFechaFin('');
+    setPaginaActual(0);
+    setNecesitaRecargar(true);
   };
   
   const handleProductoActualizado = (productoActualizado) => {
@@ -127,26 +173,79 @@ const ProductosPage = () => {
   };
 
   const eliminarProductoConfirmado = async () => {
+    if (procesandoEliminacion) return;
+  
     try {
+      setProcesandoEliminacion(true);
       const producto = modalConfirmacion.producto;
       if (!producto) return;
-      
-      await eliminarProducto(producto.id);
-      setProductos(productos.filter(p => p.id !== producto.id));
       
       setModalConfirmacion({
         mostrar: false,
         producto: null
       });
+      
+      await eliminarProducto(producto.id);
+      setNecesitaRecargar(true);
+      
     } catch (error) {
       console.error("Error al eliminar el producto:", error);
-      setError("No se pudo eliminar el producto. Por favor, intenta de nuevo.");
+      setError(`No se pudo eliminar el producto: ${error.message || 'Error desconocido'}`);
+    } finally {
+      setProcesandoEliminacion(false);
     }
   };
 
   const handlePageClick = (data) => {
-    setPaginaActual(data.selected);
+    // Asegúrate de que no navegamos a páginas inválidas
+    if (data.selected >= 0 && data.selected < totalPaginas) {
+      setPaginaActual(data.selected);
+      window.scrollTo(0, 0); // Scroll al inicio al cambiar de página
+    }
   };
+  
+  // Formatear fecha para mostrar en el botón
+  const obtenerTextoFiltroFecha = () => {
+    if (fechaInicio && fechaFin) {
+      return `Del ${formatearFecha(fechaInicio)} al ${formatearFecha(fechaFin)}`;
+    } else if (fechaInicio) {
+      return `Desde ${formatearFecha(fechaInicio)}`;
+    } else if (fechaFin) {
+      return `Hasta ${formatearFecha(fechaFin)}`;
+    }
+    return 'Filtrar por fecha de creación';
+  };
+  
+  // Función para formatear fecha
+  const formatearFecha = (fecha) => {
+    if (!fecha) return '';
+    const f = new Date(fecha);
+    return `${f.getDate()}/${f.getMonth() + 1}/${f.getFullYear()}`;
+  };
+
+  if (cargando) {
+    return (
+      <div className="productos-page">
+        <div className="spinner-container">
+          <div className="spinner">
+            <i className="fas fa-spinner fa-spin fa-3x"></i>
+            <p className="mt-2">Cargando productos...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="productos-page">
+        <div className="error-container">
+          <i className="fas fa-exclamation-triangle"></i>
+          <p>{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="productos-page">
@@ -162,7 +261,7 @@ const ProductosPage = () => {
       
       <div className="dashboard-stats">
         <div className="stat-card">
-          <div className="stat-value">{productos.length}</div>
+          <div className="stat-value">{totalProductos}</div>
           <div className="stat-label">Total Productos</div>
         </div>
         <div className="stat-card">
@@ -205,7 +304,12 @@ const ProductosPage = () => {
             <div className="dropdown-menu">
               <div 
                 className={`dropdown-item ${categoriaSeleccionada === null ? 'selected' : ''}`}
-                onClick={limpiarFiltros}
+                onClick={() => {
+                  setCategoriaSeleccionada(null);
+                  setMostrarCategorias(false);
+                  setPaginaActual(0);
+                  setNecesitaRecargar(true);
+                }}
               >
                 Todas las categorías
               </div>
@@ -222,24 +326,104 @@ const ProductosPage = () => {
           )}
         </div>
         
-        <div className="stock-filter">
-          <label>
-            <input 
-              type="checkbox" 
-              checked={filtroStock} 
-              onChange={(e) => setFiltroStock(e.target.checked)}
-            />
-            Solo productos con stock
-          </label>
+        <div className="fecha-dropdown">
+          <button 
+            className={`dropdown-toggle fecha-toggle ${fechaInicio || fechaFin ? 'active-filter' : ''}`}
+            onClick={toggleFiltroFecha}
+          >
+            <span className="fecha-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+            </span>
+            {fechaInicio || fechaFin ? obtenerTextoFiltroFecha() : 'Filtrar por fecha de creación'}
+            <span className="arrow-down">▼</span>
+          </button>
+          
+          {mostrarFiltroFecha && (
+            <div className="fecha-menu">
+              <div className="fecha-filter-container">
+                <div className="fecha-filter-title">Filtrar por fecha de creación</div>
+                <div className="fecha-input-group">
+                  <label htmlFor="fecha-inicio">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 8l4 4m0 0l-4 4m4-4H3"></path>
+                    </svg>
+                    Desde:
+                  </label>
+                  <input
+                    type="date"
+                    id="fecha-inicio"
+                    value={fechaInicio}
+                    onChange={(e) => setFechaInicio(e.target.value)}
+                    className="fecha-input"
+                  />
+                </div>
+                
+                <div className="fecha-input-group">
+                  <label htmlFor="fecha-fin">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 8l4 4m0 0l-4 4m4-4h14"></path>
+                    </svg>
+                    Hasta:
+                  </label>
+                  <input
+                    type="date"
+                    id="fecha-fin"
+                    value={fechaFin}
+                    onChange={(e) => setFechaFin(e.target.value)}
+                    className="fecha-input"
+                  />
+                </div>
+                
+                <div className="fecha-actions">
+                  <button 
+                    className="btn-aplicar"
+                    onClick={aplicarFiltroFecha}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M9 10.5l3 3L22 4"></path>
+                      <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                    Aplicar filtro
+                  </button>
+                  
+                  {(fechaInicio || fechaFin) && (
+                    <button 
+                      className="btn-limpiar"
+                      onClick={limpiarFiltroFecha}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                      </svg>
+                      Limpiar
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+        
+        {(categoriaSeleccionada || busqueda || fechaInicio || fechaFin) && (
+          <button 
+            className="btn-limpiar-todos"
+            onClick={limpiarFiltros}
+          >
+            Limpiar filtros
+          </button>
+        )}
       </div>
       
-      {cargando ? (
-        <div className="cargando">Cargando productos...</div>
-      ) : error ? (
-        <div className="error">{error}</div>
-      ) : productosFiltrados.length === 0 ? (
-        <div className="sin-resultados">No hay productos disponibles con los filtros aplicados</div>
+      {productosFiltrados.length === 0 ? (
+        <div className="sin-resultados">
+          <i className="fas fa-box-open"></i>
+          <p>No hay productos disponibles con los filtros aplicados</p>
+        </div>
       ) : (
         <div className="grid-productos">
           {productosFiltrados.map(producto => (
@@ -255,21 +439,95 @@ const ProductosPage = () => {
         </div>
       )}
 
-      <div className="productos-pagination">
-        <ReactPaginate
-          previousLabel={'Anterior'}
-          nextLabel={'Siguiente'}
-          breakLabel={'...'}
-          breakClassName={'break-me'}
-          pageCount={totalPaginas}
-          marginPagesDisplayed={2}
-          pageRangeDisplayed={5}
-          onPageChange={handlePageClick}
-          containerClassName={'pagination'}
-          subContainerClassName={'pages pagination'}
-          activeClassName={'active'}
-        />
-      </div>
+      {productosFiltrados.length > 0 && (
+        <div className="pagination-container">
+          <div className="pagination">
+            <button 
+              className="pagination-button"
+              onClick={() => handlePageClick({selected: paginaActual - 1})}
+              disabled={paginaActual === 0}
+            >
+              <FaChevronLeft />
+            </button>
+            
+            {/* Calculamos qué páginas mostrar para evitar duplicados */}
+            {(() => {
+              // Determinamos el rango de páginas a mostrar (máximo 5)
+              let startPage = Math.max(0, Math.min(paginaActual - 2, totalPaginas - 5));
+              let endPage = Math.min(startPage + 4, totalPaginas - 1);
+              
+              // Si no tenemos suficientes páginas al final, ajustamos el inicio
+              if (endPage - startPage < 4) {
+                startPage = Math.max(0, endPage - 4);
+              }
+              
+              // Crear un array con los números de página a mostrar
+              const pages = [];
+              
+              // Primera página y elipsis si no es visible en el rango actual
+              if (startPage > 0) {
+                pages.push(
+                  <button
+                    key="first"
+                    className="pagination-button"
+                    onClick={() => handlePageClick({selected: 0})}
+                  >
+                    1
+                  </button>
+                );
+                
+                if (startPage > 1) {
+                  pages.push(<span key="ellipsis-start" className="pagination-ellipsis">...</span>);
+                }
+              }
+              
+              // Botones del rango principal
+              for (let i = startPage; i <= endPage; i++) {
+                pages.push(
+                  <button
+                    key={i}
+                    className={`pagination-button ${paginaActual === i ? 'active' : ''}`}
+                    onClick={() => handlePageClick({selected: i})}
+                  >
+                    {i + 1}
+                  </button>
+                );
+              }
+              
+              // Última página y elipsis si no es visible en el rango actual
+              if (endPage < totalPaginas - 1) {
+                if (endPage < totalPaginas - 2) {
+                  pages.push(<span key="ellipsis-end" className="pagination-ellipsis">...</span>);
+                }
+                
+                pages.push(
+                  <button
+                    key="last"
+                    className="pagination-button"
+                    onClick={() => handlePageClick({selected: totalPaginas - 1})}
+                  >
+                    {totalPaginas}
+                  </button>
+                );
+              }
+              
+              return pages;
+            })()}
+            
+            <button 
+              className="pagination-button"
+              onClick={() => handlePageClick({selected: paginaActual + 1})}
+              disabled={paginaActual === totalPaginas - 1}
+            >
+              <FaChevronRight />
+            </button>
+          </div>
+          
+          <div className="pagination-info">
+            Mostrando {paginaActual * 6 + 1}-{Math.min((paginaActual + 1) * 6, totalProductos)} de {totalProductos} productos
+          </div>
+        </div>
+      )}
 
       {modalConfirmacion.mostrar && (
         <ConfirmacionModal 
