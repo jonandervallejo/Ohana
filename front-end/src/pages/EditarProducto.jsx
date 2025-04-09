@@ -5,7 +5,7 @@ import './css/EditarProducto.css';
 import Toast from '../components/ui/Toast';
 import Layout from '../components/layout/Layout';
 
-const API_URL = 'http://88.15.26.49:8000/api';
+const API_URL = 'http://88.15.46.106:8000/api';
 const BASE_URL = API_URL.replace('/api', '');
 
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -136,6 +136,7 @@ useEffect(() => {
             setLoading(true);
             const response = await axios.get(`${API_URL}/productos/${id}`);
             const producto = response.data;
+            setProducto(producto);
             
             setFormData({
                 nombre: producto.nombre || '',
@@ -504,9 +505,11 @@ useEffect(() => {
       )}
       
       {loading ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Cargando datos del producto...</p>
+        <div className="spinner-container">
+          <div className="spinner">
+            <i className="fas fa-spinner fa-spin fa-3x"></i>
+            <p className="mt-2">Cargando datos del producto...</p>
+          </div>
         </div>
       ) : (
         <div className="form-container">

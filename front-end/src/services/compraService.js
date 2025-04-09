@@ -1,4 +1,4 @@
-const API_URL = 'http://88.15.26.49:8000/api';
+const API_URL = 'http://88.15.46.106:8000/api';
 
 export const obtenerPedidosPendientes = async () => {
   try {

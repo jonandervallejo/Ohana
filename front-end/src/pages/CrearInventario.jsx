@@ -5,7 +5,7 @@ import { obtenerProductosConStock } from '../services/productoService';
 import Toast from '../components/ui/Toast';
 import './css/Inventario.css';
 
-const API_URL = 'http://88.15.26.49:8000/api';
+const API_URL = 'http://88.15.46.106:8000/api';
 
 const CrearInventario = () => {
   const navigate = useNavigate();
@@ -64,10 +64,13 @@ const CrearInventario = () => {
     };
   }, [selectRef]);
 
-  const productosFiltradosDropdown = productos
-    .filter(producto => 
-      producto.nombre.toLowerCase().includes(productoSearch.toLowerCase()))
-    .slice(0, 5);
+  // Añadir verificación de array antes de filtrar
+  const productosFiltradosDropdown = Array.isArray(productos) 
+  ? productos
+      .filter(producto => producto && producto.nombre && 
+        producto.nombre.toLowerCase().includes(productoSearch.toLowerCase()))
+      .slice(0, 5)
+  : [];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -126,9 +129,17 @@ const CrearInventario = () => {
       </div>
 
       {cargando ? (
-        <div className="cargando">Cargando productos...</div>
+        <div className="spinner-container">
+          <div className="spinner">
+            <i className="fas fa-spinner fa-spin fa-3x"></i>
+            <p className="mt-2">Cargando productos...</p>
+          </div>
+        </div>
       ) : error ? (
-        <div className="error">{error}</div>
+        <div className="error-container">
+          <i className="fas fa-exclamation-triangle"></i>
+          <p>{error}</p>
+        </div>
       ) : (
         <form id="inventario-form" onSubmit={handleSubmit}>
           <div className="form-group">

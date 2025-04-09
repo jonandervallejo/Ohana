@@ -7,7 +7,7 @@ import ConfirmacionModal from '../components/ui/CofirmacionModal';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './css/Productos.css';
 
-const API_URL = 'http://88.15.26.49:8000/api';
+const API_URL = 'http://88.15.46.106:8000/api';
 
 const ProductosPage = () => {
   const [productos, setProductos] = useState([]);
@@ -249,16 +249,15 @@ const ProductosPage = () => {
 
   return (
     <div className="productos-page">
-      <div className="productos-header">
+      {/* Header con título y botón de nuevo producto */}
+      <div className="gestion-header">
         <h1>Gestión de Productos</h1>
-        <Link to="/productos/crear" className="btn-nuevo" aria-label="Crear nuevo producto">
-          <div className="icon-container">
-            <span className="icon-plus">+</span>
-          </div>
-          <span>Nuevo Producto</span>
+        <Link to="/productos/crear" className="btn-add-user" aria-label="Crear nuevo producto">
+          <span className="icon-plus">+</span> Nuevo Producto
         </Link>
       </div>
       
+      {/* Dashboard de estadísticas - MOVIDO ANTES DE LOS FILTROS */}
       <div className="dashboard-stats">
         <div className="stat-card">
           <div className="stat-value">{totalProductos}</div>
@@ -270,6 +269,7 @@ const ProductosPage = () => {
         </div>
       </div>
       
+      {/* Filtros separados debajo del dashboard */}
       <div className="filtros-container">
         <div className="search-container">
           <input

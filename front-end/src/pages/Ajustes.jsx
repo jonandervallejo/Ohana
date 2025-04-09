@@ -59,7 +59,7 @@ const Ajustes = () => {
     setSuccess('');
     
     try {
-      const response = await fetch('http://88.15.26.49:8000/api/profile/update', {
+      const response = await fetch('http://88.15.46.106:8000/api/profile/update', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -102,7 +102,7 @@ const Ajustes = () => {
     setSuccess('');
     
     try {
-      const response = await fetch('http://88.15.26.49:8000/api/profile/password', {
+      const response = await fetch('http://88.15.46.106:8000/api/profile/password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

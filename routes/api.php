@@ -48,7 +48,7 @@ Route::post('password/email', [PasswordResetController::class, 'sendResetLinkEma
 Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.update');
 Route::get('password/reset/{token}', function($token) {
     $email = request('email', '');
-    return redirect()->away("http://88.15.26.49:3000/new-password/{$token}?email={$email}");
+    return redirect()->away("http://88.15.46.106:3000/new-password/{$token}?email={$email}");
 })->name('password.reset');
 
 // Rutas del perfil y cierre de sesión

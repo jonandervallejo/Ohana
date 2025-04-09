@@ -4,7 +4,7 @@ import './css/TarjetaProducto.css';
 import DetalleProductoModal from './DetalleProductoModal';
 import Toast from '../ui/Toast';
 
-const API_BASE_URL = 'http://88.15.26.49:8000';
+const API_BASE_URL = 'http://88.15.46.106:8000';
 
 const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, onProductoEliminado }) => {
   const navigate = useNavigate();

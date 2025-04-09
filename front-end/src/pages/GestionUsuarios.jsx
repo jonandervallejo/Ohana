@@ -111,7 +111,7 @@ const GestionUsuarios = () => {
       console.log('Intentando cargar usuarios con token:', token ? 'Token presente' : 'Token ausente');
       
       // First fetch the regular users (admins and technicians)
-      const response = await fetch('http://88.15.26.49:8000/api/usuarios', {
+      const response = await fetch('http://88.15.46.106:8000/api/usuarios', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'
@@ -132,7 +132,7 @@ const GestionUsuarios = () => {
       
       // Now fetch clients if available
       try {
-        const clientsResponse = await fetch('http://88.15.26.49:8000/api/clientes', {
+        const clientsResponse = await fetch('http://88.15.46.106:8000/api/clientes', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
@@ -224,8 +224,8 @@ const GestionUsuarios = () => {
       const isEdit = !!editingUser;
       
       const url = isEdit 
-        ? `http://88.15.26.49:8000/api/usuarios/${editingUser.id}` 
-        : 'http://88.15.26.49:8000/api/usuarios';
+        ? `http://88.15.46.106:8000/api/usuarios/${editingUser.id}` 
+        : 'http://88.15.46.106:8000/api/usuarios';
       
       const method = isEdit ? 'PUT' : 'POST';
       
@@ -298,7 +298,7 @@ const GestionUsuarios = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://88.15.26.49:8000/api/usuarios/${userId}`, {
+      const response = await fetch(`http://88.15.46.106:8000/api/usuarios/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -445,46 +445,46 @@ const GestionUsuarios = () => {
 
   return (
     <div className="gestion-usuarios-container">
-      <div className="gestion-header">
-        <h1>Gestión de Usuarios</h1>
-        <div className="gestion-actions">
-          <div className="filters-container">
-            <div className="search-container">
-              <FaSearch className="search-icon" />
-              <input
-                type="text"
-                placeholder="Buscar usuarios..."
-                value={busqueda}
-                onChange={(e) => setBusqueda(e.target.value)}
-                className="search-input"
-              />
-            </div>
-            
-            <div className="role-filter-container">
-              <FaFilter className="filter-icon" />
-              <select
-                value={filtroRol}
-                onChange={handleRolFilterChange}
-                className="role-filter"
-                disabled={actionLoading}
-              >
-                <option value="todos">Todos los roles</option>
-                <option value={ROLE_ADMIN}>Administradores</option>
-                <option value={ROLE_TECNICO}>Técnicos</option>
-                <option value={ROLE_CLIENTE}>Clientes</option>
-              </select>
-            </div>
-          </div>
-          
-          {isAdmin() && (
-            <button 
-              className="btn-add-user"
-              onClick={handleOpenCreateForm}
-              disabled={actionLoading}
-            >
-              <FaPlus /> Nuevo Usuario
-            </button>
-          )}
+      {/* Header con título y botón de nuevo usuario */}
+      <div className="header-container">
+        <h1 className="inventory-title">Gestión de Usuarios</h1>
+        {isAdmin() && (
+          <button 
+            className="btn-add-user"
+            onClick={handleOpenCreateForm}
+            disabled={actionLoading}
+          >
+            <FaPlus /> Nuevo Usuario
+          </button>
+        )}
+      </div>
+      
+      {/* Filtros separados debajo del título */}
+      <div className="filtros-container">
+        <div className="search-container">
+          <FaSearch className="search-icon" />
+          <input
+            type="text"
+            placeholder="Buscar usuarios..."
+            value={busqueda}
+            onChange={(e) => setBusqueda(e.target.value)}
+            className="search-input"
+          />
+        </div>
+        
+        <div className="role-filter-container">
+          <FaFilter className="filter-icon" />
+          <select
+            value={filtroRol}
+            onChange={handleRolFilterChange}
+            className="role-filter"
+            disabled={actionLoading}
+          >
+            <option value="todos">Todos los roles</option>
+            <option value={ROLE_ADMIN}>Administradores</option>
+            <option value={ROLE_TECNICO}>Técnicos</option>
+            <option value={ROLE_CLIENTE}>Clientes</option>
+          </select>
         </div>
       </div>
       

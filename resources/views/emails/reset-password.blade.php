@@ -148,7 +148,7 @@
             <p>Para crear una nueva contraseña y acceder nuevamente a nuestra tienda online, haz clic en el botón a continuación:</p>
             
             <div style="text-align: center;">
-                <a href="http://88.15.26.49:3000/new-password/{{ $token }}?email={{ $email }}" class="btn-reset">
+                <a href="http://88.15.46.106:3000/new-password/{{ $token }}?email={{ $email }}" class="btn-reset">
                     Restablecer mi contraseña
                 </a>
             </div>
@@ -158,7 +158,7 @@
             <p>Si tienes problemas con el botón, puedes copiar y pegar esta dirección en tu navegador:</p>
             
             <div class="url-box">
-                http://88.15.26.49:3000/new-password/{{ $token }}?email={{ $email }}
+                http://88.15.46.106:3000/new-password/{{ $token }}?email={{ $email }}
             </div>
             
             <div class="signature">

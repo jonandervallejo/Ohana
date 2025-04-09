@@ -1070,3 +1070,29 @@
   color: #64748b;
   margin: 0;
 }
+
+/* Añadir estas variables CSS si no existen */
+:root {
+  --primary-color: #4a6fa5;
+  --secondary-color: #5d5fef;
+}
+
+/* Añadir el estilo de subrayado para el h1 */
+.header-container h1::after,
+.inventory-title::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
+  border-radius: 2px;
+}
+
+/* Asegurarse de que el título tenga posición relativa */
+.header-container h1,
+.inventory-title {
+  position: relative;
+  padding-bottom: 0.5rem;
+}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './css/CrearProducto.css';
 import Toast from '../components/ui/Toast';
-const API_URL = 'http://88.15.26.49:8000/api';
+const API_URL = 'http://88.15.46.106:8000/api';
 
 const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange, previews, onRemove }) => {
   const fileInputRef = useRef(null);
@@ -542,9 +542,11 @@ const CrearProducto = () => {
       )}
       
       {loading ? (
-        <div className="loading-container">
-          <div className="loading-spinner"></div>
-          <p>Cargando categorías...</p>
+        <div className="spinner-container">
+          <div className="spinner">
+            <i className="fas fa-spinner fa-spin fa-3x"></i>
+            <p className="mt-2">Cargando categorías...</p>
+          </div>
         </div>
       ) : (
         <div className="form-container">

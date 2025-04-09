@@ -1158,3 +1158,85 @@ to {
   color: #64748b;
   margin: 0;
 }
+
+/* Estilos de cabecera unificados para todas las páginas de gestión */
+.gestion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.gestion-header h1 {
+  margin: 0;
+  color: var(--primary);
+  font-size: 28px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+}
+
+.gestion-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.gestion-actions .filters-container {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-add-user {
+  background: linear-gradient(135deg, #4a6fa5 0%, #304c70 100%);
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 10px 20px rgba(48, 76, 112, 0.2);
+  text-decoration: none;
+}
+
+.btn-add-user:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 24px rgba(48, 76, 112, 0.25);
+  background: linear-gradient(135deg, #5a80b6 0%, #3a5c80 100%);
+}
+
+.btn-add-user .icon-plus {
+  font-size: 18px;
+  font-weight: bold;
+}
+
+/* Estilos responsive */
+@media (max-width: 768px) {
+  .gestion-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+  }
+  
+  .gestion-actions {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .gestion-actions .filters-container {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .btn-add-user {
+    width: 100%;
+    justify-content: center;
+  }
+}

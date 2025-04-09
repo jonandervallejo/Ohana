@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://88.15.26.49:8000/api';
+const API_URL = 'http://88.15.46.106:8000/api';
 
 // Función para obtener el token de autenticación
 const getAuthToken = () => {
@@ -160,13 +160,21 @@ export const eliminarProducto = async (id) => {
 export const obtenerProductosConStock = async () => {
   try {
     const token = getAuthToken();
-    const response = await axios.get(`${API_URL}/productos/con-stock`, {
+    const response = await axios.get(`${API_URL}/productos`, {
       headers: {
         'Authorization': token ? `Bearer ${token}` : '',
         'Accept': 'application/json',
       }
     });
-    return response.data;
+    // Asegurar que siempre devuelve un array
+    if (Array.isArray(response.data)) {
+      return response.data;
+    } else if (response.data && Array.isArray(response.data.data)) {
+      return response.data.data;
+    } else {
+      console.warn('La respuesta no contiene un array de productos:', response.data);
+      return [];
+    }
   } catch (error) {
     console.error('Error al obtener productos con stock:', error);
     console.error('Detalles del error:', error.response?.data || 'No hay detalles adicionales');
@@ -204,7 +212,7 @@ export const eliminarInventario = async (id) => {
   const token = getAuthToken();
   
   try {
-    const response = await axios.delete(`${API_URL}/inventarios/${id}`, {
+    const response = await axios.delete(`${API_URL}/stock/${id}`, {
       headers: {
         'Authorization': `Bearer ${token}`
       }

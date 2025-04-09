@@ -175,6 +175,13 @@ const Ventas = () => {
     setFiltroFechaInicio('');
     setFiltroFechaFin('');
   };
+  
+  const limpiarFiltros = () => {
+    setFiltroProducto('');
+    setFiltroEstado('');
+    setFiltroFechaInicio('');
+    setFiltroFechaFin('');
+  };
 
   const ventasFiltradas = ventas.filter((venta) => {
     const coincideProducto = venta.productos.some(producto =>
@@ -198,10 +205,12 @@ const Ventas = () => {
 
   if (cargando) {
     return (
-      <div className="container mt-4 text-center">
-        <div className="spinner">
-          <i className="fas fa-spinner fa-spin fa-3x"></i>
-          <p className="mt-2">Cargando ventas...</p>
+      <div className="container ventas-container">
+        <div className="spinner-container">
+          <div className="spinner">
+            <i className="fas fa-spinner fa-spin fa-3x"></i>
+            <p className="mt-2">Cargando ventas...</p>
+          </div>
         </div>
       </div>
     );
@@ -209,7 +218,7 @@ const Ventas = () => {
 
   if (error) {
     return (
-      <div className="container mt-4">
+      <div className="container ventas-container">
         <div className="error-container">
           <i className="fas fa-exclamation-triangle"></i>
           <p>{error}</p>
@@ -220,15 +229,41 @@ const Ventas = () => {
 
   return (
     <div className="container ventas-container">
-      <h1 className="ventas-titulo">Registro de Ventas</h1>
-
-      <div className="filtros">
-        <input
-          type="text"
-          placeholder="Buscar por producto..."
-          value={filtroProducto}
-          onChange={(e) => setFiltroProducto(e.target.value)}
-        />
+      {/* Header con título y botones de acción */}
+      <div className="header-container">
+        <h1 className="inventory-title">Gestión de Ventas</h1>
+        <div className="header-actions">
+          {/* Aquí podrías añadir botones de acción como "Nueva venta" */}
+          {(filtroProducto || filtroEstado || filtroFechaInicio || filtroFechaFin) && (
+            <button 
+              className="btn-limpiar-todos"
+              onClick={limpiarFiltros}
+            >
+              <i className="fas fa-times-circle"></i> Limpiar filtros
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {/* Filtros separados debajo del título */}
+      <div className="filtros-container">
+        <div className="search-container">
+          <input
+            type="text"
+            placeholder="Buscar por producto..."
+            value={filtroProducto}
+            onChange={(e) => setFiltroProducto(e.target.value)}
+            className="search-input"
+          />
+          {filtroProducto && (
+            <button
+              className="clear-search"
+              onClick={() => setFiltroProducto('')}
+            >
+              ×
+            </button>
+          )}
+        </div>
         
         <div className="filtro-fecha-rango">
           <div className="fecha-rango-input">
@@ -263,16 +298,22 @@ const Ventas = () => {
             </button>
           )}
         </div>
-        <select
-          value={filtroEstado}
-          onChange={(e) => setFiltroEstado(e.target.value)}
-        >
-          <option value="">Todos los estados</option>
-          <option value="pendiente">Pendiente</option>
-          <option value="completada">Completada</option>
-          <option value="cancelada">Cancelada</option>
-        </select>
+        
+        <div className="estado-filter">
+          <select
+            value={filtroEstado}
+            onChange={(e) => setFiltroEstado(e.target.value)}
+            className="estado-select"
+          >
+            <option value="">Todos los estados</option>
+            <option value="pendiente">Pendiente</option>
+            <option value="completada">Completada</option>
+            <option value="cancelada">Cancelada</option>
+          </select>
+        </div>
       </div>
+
+      <h2 className="ventas-subtitle">Listado de Ventas</h2>
 
       {ventasFiltradas.length === 0 ? (
         <div className="sin-ventas">
