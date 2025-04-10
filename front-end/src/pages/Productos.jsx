@@ -226,7 +226,17 @@ const ProductosPage = () => {
   if (cargando) {
     return (
       <div className="productos-page">
-        <div className="spinner-container">
+        <div className="spinner-container" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginLeft: '200px',
+          position: 'center',
+          minHeight: '500px',
+          width: '100%',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          padding: '2rem'
+        }}>
           <div className="spinner">
             <i className="fas fa-spinner fa-spin fa-3x"></i>
             <p className="mt-2">Cargando productos...</p>
@@ -450,7 +460,6 @@ const ProductosPage = () => {
               <FaChevronLeft />
             </button>
             
-            {/* Calculamos qué páginas mostrar para evitar duplicados */}
             {(() => {
               // Determinamos el rango de páginas a mostrar (máximo 5)
               let startPage = Math.max(0, Math.min(paginaActual - 2, totalPaginas - 5));

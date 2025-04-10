@@ -116,8 +116,18 @@ const Inventario = () => {
 
   if (cargando) {
     return (
-      <div className="container mt-4 text-center">
-        <div className="spinner-container">
+      <div className="productos-page">
+        <div className="spinner-container" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginLeft: '200px',
+          position: 'center',
+          minHeight: '500px',
+          width: '100%',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          padding: '2rem'
+        }}>
           <div className="spinner">
             <i className="fas fa-spinner fa-spin fa-3x"></i>
             <p className="mt-2">Cargando inventarios...</p>

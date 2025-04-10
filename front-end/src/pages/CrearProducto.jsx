@@ -520,6 +520,29 @@ const CrearProducto = () => {
     setError('');
   }, []);
 
+  if (loading) {
+    return (
+      <div className="crear-producto-page">
+        <div className="spinner-container" style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          marginLeft: '200px',
+          position: 'center',
+          minHeight: '500px',
+          width: '100%',
+          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          padding: '2rem'
+        }}>
+          <div className="spinner">
+            <i className="fas fa-spinner fa-spin fa-3x"></i>
+            <p className="mt-2">Cargando categorías...</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="crear-producto-page">
       <div className="page-header">
@@ -541,23 +564,14 @@ const CrearProducto = () => {
         </div>
       )}
       
-      {loading ? (
-        <div className="spinner-container">
-          <div className="spinner">
-            <i className="fas fa-spinner fa-spin fa-3x"></i>
-            <p className="mt-2">Cargando categorías...</p>
-          </div>
-        </div>
-      ) : (
-        <div className="form-container">
-          <FormularioProducto 
-            categorias={categorias} 
-            onSubmit={handleGuardarProducto}
-            onCancel={handleCancel}
-            guardando={guardando}
-          />
-        </div>
-      )}
+      <div className="form-container">
+        <FormularioProducto 
+          categorias={categorias} 
+          onSubmit={handleGuardarProducto}
+          onCancel={handleCancel}
+          guardando={guardando}
+        />
+      </div>
       
       <Toast
         mensaje={toastInfo.mensaje}
