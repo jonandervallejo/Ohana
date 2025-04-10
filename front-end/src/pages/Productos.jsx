@@ -225,17 +225,17 @@ const ProductosPage = () => {
 
   if (cargando) {
     return (
-      <div className="productos-page">
+      <div className="container ventas-container">
         <div className="spinner-container" style={{
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          marginLeft: '200px',
-          position: 'center',
+          position: 'relative',
           minHeight: '500px',
           width: '100%',
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          padding: '2rem'
+          padding: '2rem',
+          margin: '0 auto'  // Centra el contenedor horizontalmente
         }}>
           <div className="spinner">
             <i className="fas fa-spinner fa-spin fa-3x"></i>

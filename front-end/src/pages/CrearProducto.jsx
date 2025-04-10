@@ -527,12 +527,12 @@ const CrearProducto = () => {
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          marginLeft: '200px',
           position: 'center',
           minHeight: '500px',
           width: '100%',
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
-          padding: '2rem'
+          padding: '2rem',
+          margin: '0 auto'  // Centra el contenedor horizontalmente
         }}>
           <div className="spinner">
             <i className="fas fa-spinner fa-spin fa-3x"></i>
