@@ -47,12 +47,9 @@ const DetalleProductoModal = ({ producto, getImageUrl, onClose }) => {
             <FaTimes />
           </button>
         </div>
-        <div className="modal-body no-scroll">
+        <div className="modal-body">
           <div className="detalle-grid">
             <div className="detalle-imagen-container">
-              <div className="imagen-badge">
-                <span>ID: {producto.id}</span>
-              </div>
               <img 
                 src={getImageUrl(producto.imagen)} 
                 alt={producto.nombre} 
@@ -64,14 +61,15 @@ const DetalleProductoModal = ({ producto, getImageUrl, onClose }) => {
               />
             </div>
             
-            <div className="detalle-info no-scroll">
-              <h3 className="detalle-titulo">{producto.nombre}</h3>
-              
-              <div className="detalle-categoria">
-                <FaTag className="detalle-icon" />
-                <span className="detalle-categoria-etiqueta">
-                  {producto.categoria ? producto.categoria.nombre_cat : 'Sin categoría'}
-                </span>
+            <div className="detalle-info">
+              <div className="detalle-header">
+                <h3 className="detalle-titulo">{producto.nombre}</h3>
+                <div className="detalle-categoria">
+                  <FaTag className="detalle-icon" />
+                  <span className="detalle-categoria-etiqueta">
+                    {producto.categoria ? producto.categoria.nombre_cat : 'Sin categoría'}
+                  </span>
+                </div>
               </div>
               
               <div className="detalle-precio-container">
@@ -79,23 +77,15 @@ const DetalleProductoModal = ({ producto, getImageUrl, onClose }) => {
                 <span className="detalle-precio">{producto.precio}€</span>
               </div>
               
-              <div className="detalle-detalles-contenedor">
-                <div className="detalle-descripcion-container">
-                  <h4>Descripción</h4>
-                  <p className="detalle-descripcion">{producto.descripcion || 'No hay descripción disponible para este producto.'}</p>
-                </div>
-                
-                <div className="detalle-specs-container">
-                  <h4>Especificaciones</h4>
-                  <div className="detalle-specs">
-                    <div className="detalle-spec-item">
-                      <span className="spec-label">Tipo:</span>
-                      <span className="spec-value">{producto.tipo || 'N/A'}</span>
-                    </div>
-                    <div className="detalle-spec-item">
-                      <span className="spec-label">Talla:</span>
-                      <span className="spec-value">{producto.talla || 'N/A'}</span>
-                    </div>
+              <div className="detalle-specs-container">
+                <div className="detalle-specs">
+                  <div className="detalle-spec-item">
+                    <span className="spec-label">Tipo:</span>
+                    <span className="spec-value">{producto.tipo || 'N/A'}</span>
+                  </div>
+                  <div className="detalle-spec-item">
+                    <span className="spec-label">Talla:</span>
+                    <span className="spec-value">{producto.talla || 'N/A'}</span>
                   </div>
                 </div>
               </div>

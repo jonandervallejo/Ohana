@@ -103,14 +103,14 @@ class ProductoController extends Controller
         }
     }
 
-    public function show($id)
+    /*public function show($id)
     {
         $producto = Producto::with(['categoria', 'stocks'])->find($id);
         if (!$producto) return response()->json(['error' => 'Producto no encontrado'], 404);
         
         $producto->imagenes = $this->transformImageData($producto->imagenes);
         return response()->json($producto);
-    }
+    }*/
 
     public function productosPorCategoria(Request $request, $id_categoria)
     {
@@ -509,4 +509,6 @@ class ProductoController extends Controller
             return response()->json([]);
         }
     }
+
+    
 }

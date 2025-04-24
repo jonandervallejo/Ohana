@@ -1,6 +1,7 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
 import { AuthContext } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import './css/Navbar.css';
 
 const userIcon = (
@@ -69,6 +70,12 @@ const hamburgerIcon = (
   </svg>
 );
 
+const themeToggleIcon = (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+    <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
+  </svg>
+);
+
 const ConfirmDialog = ({ isOpen, message, onConfirm, onCancel }) => {
   if (!isOpen) return null;
   
@@ -88,6 +95,7 @@ const ConfirmDialog = ({ isOpen, message, onConfirm, onCancel }) => {
 
 const Navbar = () => {
   const { usuario, logout, isAdmin, isTecnico, ROLE_ADMIN, ROLE_TECNICO } = useContext(AuthContext);
+  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -170,13 +178,17 @@ const Navbar = () => {
           {hamburgerIcon}
         </button>
         <h2 className="mobile-header-title">Ohana</h2>
-        {/* Removido el indicador de rol numérico */}
+        <button className="theme-toggle" onClick={toggleTheme}>
+          {themeToggleIcon}
+        </button>
       </header>
       
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} ref={sidebarRef}>
         <div className="sidebar-header">
           <h2>Ohana</h2>
-          {/* Removido el indicador de rol numérico */}
+          <button className="theme-toggle" onClick={toggleTheme}>
+            {themeToggleIcon}
+          </button>
           <button className="close-sidebar" onClick={toggleSidebar}>×</button>
         </div>
         
