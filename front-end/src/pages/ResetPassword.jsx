@@ -13,7 +13,7 @@ const ResetPassword = () => {
     setStatus({ type: '', message: '' });
 
     try {
-      const response = await fetch('http://88.15.46.106:8000/api/password/email', {
+      const response = await fetch('http://ohanatienda.ddns.net:8000/api/password/email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -1,7 +1,6 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom'; 
 import { AuthContext } from '../../context/AuthContext';
-import { useTheme } from '../../context/ThemeContext';
 import './css/Navbar.css';
 
 const userIcon = (
@@ -60,19 +59,13 @@ const salesIcon = (
 
 const inventoryIcon = (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-    <path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zM8 20H4v-4h4v4zm0-6H4v-4h4v4zm0-6H4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4zm6 12h-4v-4h4v4zm0-6h-4v-4h4v4zm0-6h-4V4h4v4z"/>
+    <path d="M20 2H4c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 18H6V4h12v16zm-7-2h2v-2h-2v2zm-1-4h4v-2h-4v2zm5-4H7V8h8v2z"/>
   </svg>
 );
 
 const hamburgerIcon = (
   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
     <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
-  </svg>
-);
-
-const themeToggleIcon = (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
-    <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 16c-3.86 0-7-3.14-7-7s3.14-7 7-7 7 3.14 7 7-3.14 7-7 7z"/>
   </svg>
 );
 
@@ -95,7 +88,6 @@ const ConfirmDialog = ({ isOpen, message, onConfirm, onCancel }) => {
 
 const Navbar = () => {
   const { usuario, logout, isAdmin, isTecnico, ROLE_ADMIN, ROLE_TECNICO } = useContext(AuthContext);
-  const { isDarkMode, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -178,17 +170,11 @@ const Navbar = () => {
           {hamburgerIcon}
         </button>
         <h2 className="mobile-header-title">Ohana</h2>
-        <button className="theme-toggle" onClick={toggleTheme}>
-          {themeToggleIcon}
-        </button>
       </header>
       
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} ref={sidebarRef}>
         <div className="sidebar-header">
           <h2>Ohana</h2>
-          <button className="theme-toggle" onClick={toggleTheme}>
-            {themeToggleIcon}
-          </button>
           <button className="close-sidebar" onClick={toggleSidebar}>×</button>
         </div>
         

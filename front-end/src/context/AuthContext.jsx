@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }) => {
     if (token) {
       try {
         console.log("Verificando token...");
-        const response = await fetch('http://88.15.46.106:8000/api/user', {
+        const response = await fetch('http://ohanatienda.ddns.net:8000/api/user', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
@@ -260,7 +260,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch('http://88.15.46.106:8000/api/login', {
+      const response = await fetch('http://ohanatienda.ddns.net:8000/api/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -299,7 +299,7 @@ export const AuthProvider = ({ children }) => {
     
     if (currentToken) {
       try {
-        await fetch('http://88.15.46.106:8000/api/logout', {
+        await fetch('http://ohanatienda.ddns.net:8000/api/logout', {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${currentToken}`,

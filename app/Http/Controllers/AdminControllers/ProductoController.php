@@ -103,14 +103,14 @@ class ProductoController extends Controller
         }
     }
 
-    /*public function show($id)
+    public function show($id)
     {
         $producto = Producto::with(['categoria', 'stocks'])->find($id);
         if (!$producto) return response()->json(['error' => 'Producto no encontrado'], 404);
         
         $producto->imagenes = $this->transformImageData($producto->imagenes);
         return response()->json($producto);
-    }*/
+    }
 
     public function productosPorCategoria(Request $request, $id_categoria)
     {
@@ -510,5 +510,73 @@ class ProductoController extends Controller
         }
     }
 
+
+    public function getProductosPorGenero(Request $request, $genero)
+    {
+        try {
+            // Validar que el género sea válido (ahora incluye unisex)
+            if (!in_array(strtolower($genero), ['hombre', 'mujer', 'unisex'])) {
+                return response()->json(['error' => 'Género no válido. Use "hombre", "mujer" o "unisex"'], 400);
+            }
+            
+            // Normalizar el género para la consulta
+            $generoNormalizado = ucfirst(strtolower($genero));
+            
+            // Crear la consulta base con relaciones
+            $query = Producto::with(['categoria', 'stocks']);
+            
+            // Filtrado según el género
+            if ($generoNormalizado === 'Unisex') {
+                $query->where(function($q) {
+                    $q->where('tipo', 'LIKE', '%unisex%')
+                    ->orWhere('tipo', 'LIKE', '%uni%')
+                    ->orWhere('tipo', 'LIKE', '%ambos%');
+                });
+            } else {
+                // Hombre o Mujer (incluye unisex)
+                $query->where(function($q) use ($generoNormalizado) {
+                    $q->where('tipo', 'LIKE', "%{$generoNormalizado}%")
+                    ->orWhere('tipo', 'LIKE', '%unisex%')
+                    ->orWhere('tipo', 'LIKE', '%uni%')
+                    ->orWhere('tipo', 'LIKE', '%ambos%');
+                });
+            }
+            
+            // Aplicar filtro de búsqueda si existe
+            if ($request->has('busqueda') && !empty($request->busqueda)) {
+                $busqueda = $request->busqueda;
+                $query->where(function($q) use ($busqueda) {
+                    $q->where('nombre', 'LIKE', "%{$busqueda}%")
+                    ->orWhere('descripcion', 'LIKE', "%{$busqueda}%");
+                });
+            }
+            
+            // Aplicar filtros de precio si existen
+            if ($request->has('precio_min') && is_numeric($request->precio_min)) {
+                $query->where('precio', '>=', $request->precio_min);
+            }
+            
+            if ($request->has('precio_max') && is_numeric($request->precio_max)) {
+                $query->where('precio', '<=', $request->precio_max);
+            }
+            
+            // Aplicar filtro de categoría si existe
+            if ($request->has('categoria') && !empty($request->categoria)) {
+                $query->where('id_categoria', $request->categoria);
+            }
+            
+            // Configurar la paginación
+            $perPage = $request->input('per_page', 6);
+            $productos = $query->paginate($perPage);
+            
+            // Transformar las imágenes y devolver la respuesta
+            return response()->json($this->transformProductImages($productos));
+            
+        } catch (\Exception $e) {
+            Log::error('Error en getProductosPorGenero: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Error al obtener productos por género'], 500);
+        }
+    }
     
 }

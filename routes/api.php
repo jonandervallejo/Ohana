@@ -30,6 +30,7 @@ Route::middleware('auth:sanctum')->group(function() {
 
 // Rutas de productos
 Route::get('/productos', [ProductoController::class, 'index']);
+Route::get('/productos/imagenes', [ProductosController::class, 'obtenerImagenes']);  //***********************************APP************************
 Route::get('/productos/{id}', [ProductoController::class, 'show']);
 Route::get('/productos/categoria/{id_categoria}', [ProductoController::class, 'productosPorCategoria']);
 
@@ -50,7 +51,7 @@ Route::post('password/email', [PasswordResetController::class, 'sendResetLinkEma
 Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.update');
 Route::get('password/reset/{token}', function($token) {
     $email = request('email', '');
-    return redirect()->away("http://88.15.46.106:3000/new-password/{$token}?email={$email}");
+    return redirect()->away("http://ohanatienda.ddns.net:3000/new-password/{$token}?email={$email}");
 })->name('password.reset');
 
 // Rutas del perfil y cierre de sesión
@@ -86,6 +87,6 @@ Route::delete('/ventas/{id}', [VentaController::class, 'destroy']);
 
 Route::get('/usuarios/contar-clientes', [UsuarioController::class, 'contarClientes']);
 
+Route::get('/productos/genero/{genero}', [ProductoController::class, 'getProductosPorGenero']);
 
-//*************************************************************************Rutas APP********************************************************/
-Route::get('/productos/imagenes', [ProductosController::class, 'obtenerImagenes']);
+

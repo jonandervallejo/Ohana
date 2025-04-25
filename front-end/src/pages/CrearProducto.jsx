@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './css/CrearProducto.css';
 import Toast from '../components/ui/Toast';
-const API_URL = 'http://88.15.46.106:8000/api';
+const API_URL = 'http://ohanatienda.ddns.net:8000/api';
 
 const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange, previews, onRemove }) => {
   const fileInputRef = useRef(null);

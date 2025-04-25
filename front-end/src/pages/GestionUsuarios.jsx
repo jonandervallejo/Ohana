@@ -111,7 +111,7 @@ const GestionUsuarios = () => {
       console.log('Intentando cargar usuarios con token:', token ? 'Token presente' : 'Token ausente');
       
       // First fetch the regular users (admins and technicians)
-      const response = await fetch('http://88.15.46.106:8000/api/usuarios', {
+      const response = await fetch('http://ohanatienda.ddns.net:8000/api/usuarios', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Accept': 'application/json'
@@ -132,7 +132,7 @@ const GestionUsuarios = () => {
       
       // Now fetch clients if available
       try {
-        const clientsResponse = await fetch('http://88.15.46.106:8000/api/clientes', {
+        const clientsResponse = await fetch('http://ohanatienda.ddns.net:8000/api/clientes', {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'application/json'
@@ -224,8 +224,8 @@ const GestionUsuarios = () => {
       const isEdit = !!editingUser;
       
       const url = isEdit 
-        ? `http://88.15.46.106:8000/api/usuarios/${editingUser.id}` 
-        : 'http://88.15.46.106:8000/api/usuarios';
+        ? `http://ohanatienda.ddns.net:8000/api/usuarios/${editingUser.id}` 
+        : 'http://ohanatienda.ddns.net:8000/api/usuarios';
       
       const method = isEdit ? 'PUT' : 'POST';
       
@@ -298,7 +298,7 @@ const GestionUsuarios = () => {
     
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://88.15.46.106:8000/api/usuarios/${userId}`, {
+      const response = await fetch(`http://ohanatienda.ddns.net:8000/api/usuarios/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

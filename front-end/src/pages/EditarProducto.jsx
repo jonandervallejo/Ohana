@@ -5,7 +5,7 @@ import './css/EditarProducto.css';
 import Toast from '../components/ui/Toast';
 import Layout from '../components/layout/Layout';
 
-const API_URL = 'http://88.15.46.106:8000/api';
+const API_URL = 'http://ohanatienda.ddns.net:8000/api';
 const BASE_URL = API_URL.replace('/api', '');
 
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);

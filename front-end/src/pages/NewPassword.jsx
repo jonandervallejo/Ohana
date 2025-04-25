@@ -57,7 +57,7 @@ const NewPassword = () => {
     try {
       console.log("Enviando solicitud de restablecimiento para:", email);
       
-      const response = await fetch('http://88.15.46.106:8000/api/password/reset', {
+      const response = await fetch('http://ohanatienda.ddns.net:8000/api/password/reset', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
