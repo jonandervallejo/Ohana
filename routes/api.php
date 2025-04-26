@@ -28,11 +28,13 @@ Route::middleware('auth:sanctum')->group(function() {
     Route::delete('/usuarios/{id}', [UsuarioController::class, 'destroy']);
 });
 
-// Rutas de productos
+// Rutas de productos - REORDENADAS para evitar conflictos
 Route::get('/productos', [ProductoController::class, 'index']);
-Route::get('/productos/imagenes', [ProductosController::class, 'obtenerImagenes']);  //***********************************APP************************
-Route::get('/productos/{id}', [ProductoController::class, 'show']);
+Route::get('/productos/buscar', [ProductoController::class, 'buscar']); // Movido arriba
+Route::get('/productos/genero/{genero}', [ProductoController::class, 'getProductosPorGenero']); // Movido arriba
+Route::get('/productos/imagenes', [ProductosController::class, 'obtenerImagenes']);
 Route::get('/productos/categoria/{id_categoria}', [ProductoController::class, 'productosPorCategoria']);
+Route::get('/productos/{id}', [ProductoController::class, 'show']); // Movido abajo
 
 // Rutas protegidas para productos (admin)
 Route::middleware('auth:sanctum')->group(function() {
@@ -84,9 +86,3 @@ Route::put('/ventas/{id}/completar', [VentaController::class, 'completar']);
 Route::put('/ventas/{id}/cancelar', [VentaController::class, 'cancelar']);
 Route::get('/ventas-estadisticas', [VentaController::class, 'estadisticas']);
 Route::delete('/ventas/{id}', [VentaController::class, 'destroy']);
-
-Route::get('/usuarios/contar-clientes', [UsuarioController::class, 'contarClientes']);
-
-Route::get('/productos/genero/{genero}', [ProductoController::class, 'getProductosPorGenero']);
-
-

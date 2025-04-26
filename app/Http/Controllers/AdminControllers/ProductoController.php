@@ -510,7 +510,6 @@ class ProductoController extends Controller
         }
     }
 
-
     public function getProductosPorGenero(Request $request, $genero)
     {
         try {
@@ -578,5 +577,30 @@ class ProductoController extends Controller
             return response()->json(['error' => 'Error al obtener productos por género'], 500);
         }
     }
+
+    public function buscar(Request $request)
+{
+    try {
+        $query = $request->get('q', '');
+        
+        if (empty($query)) {
+            return response()->json([]);
+        }
+        
+        $productos = Producto::where('nombre', 'like', "%{$query}%")
+            ->orWhere('descripcion', 'like', "%{$query}%")
+            ->with('categoria')
+            ->limit(20)
+            ->get();
+        
+        return response()->json($productos);
+    } catch (\Exception $e) {
+        // Log del error
+        \Log::error('Error en búsqueda de productos: ' . $e->getMessage());
+        
+        // Devolver respuesta de error controlada
+        return response()->json(['error' => 'Error al buscar productos'], 500);
+    }
+}
     
 }

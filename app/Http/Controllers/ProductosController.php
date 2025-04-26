@@ -31,8 +31,8 @@ class ProductosController extends Controller
             // Opción para limitar el número de productos
             $limite = $request->query('limite', null);
             
-            // Consulta base
-            $query = Producto::select('id', 'nombre', 'imagen', 'precio')
+            // Consulta base - añadido el campo 'imagenes'
+            $query = Producto::select('id', 'nombre', 'imagen', 'imagenes', 'precio')
                 ->orderBy('created_at', 'desc'); // Los más recientes primero
                 
             // Aplicar límite si se proporciona
@@ -40,19 +40,58 @@ class ProductosController extends Controller
                 $query->limit($limite);
             }
             
-            $imagenes = $query->get();
+            $productos = $query->get();
             
             // Transformar las URLs de las imágenes para incluir la ruta completa
-            $imagenes->transform(function ($producto) {
-                $producto->imagen = asset('storage/' . $producto->imagen);
+            $productos->transform(function ($producto) {
+                // Procesar imagen principal
+                if ($producto->imagen) {
+                    $producto->imagen = $producto->imagen; // Ya tiene la ruta correcta
+                }
+                
+                // Procesar imágenes del carrusel
+                if ($producto->imagenes) {
+                    // Convertir JSON a array
+                    $imagenesArray = json_decode($producto->imagenes, true) ?: [];
+                    $imagenesTransformadas = [];
+                    
+                    // Si es un array simple de rutas
+                    if (!empty($imagenesArray) && !is_array(reset($imagenesArray))) {
+                        foreach ($imagenesArray as $index => $ruta) {
+                            $imagenesTransformadas[] = [
+                                'id' => 'carousel-' . $index,
+                                'ruta' => 'uploads/productos/carrusel/' . $ruta,
+                                'orden' => $index
+                            ];
+                        }
+                    } 
+                    // Si es un array de objetos con la estructura {id, ruta, orden}
+                    else {
+                        foreach ($imagenesArray as $index => $img) {
+                            if (isset($img['ruta'])) {
+                                $imagenesTransformadas[] = [
+                                    'id' => 'carousel-' . $index,
+                                    'ruta' => 'uploads/productos/carrusel/' . basename($img['ruta']),
+                                    'orden' => $img['orden'] ?? $index
+                                ];
+                            }
+                        }
+                    }
+                    
+                    $producto->imagenes = $imagenesTransformadas;
+                } else {
+                    $producto->imagenes = [];
+                }
+                
                 // Formatear el precio para la app
                 if (isset($producto->precio)) {
                     $producto->precio_formateado = number_format($producto->precio, 2) . ' €';
                 }
+                
                 return $producto;
             });
             
-            return response()->json($imagenes);
+            return response()->json($productos);
         } 
         catch (\Exception $e) {
             return response()->json([
