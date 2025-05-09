@@ -406,4 +406,274 @@ class UsuarioController extends BaseController
             return response()->json(['message' => 'Error al eliminar usuario: ' . $e->getMessage()], 500);
         }
     }
+
+     /**
+     * Login para la tienda (solo clientes)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function loginTienda(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'email' => 'required|email',
+                'password' => 'required|string',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Datos de inicio de sesión incorrectos',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Buscar usuario por email
+            $usuario = Usuario::where('email', $request->email)->first();
+            
+            // Verificar que el usuario existe y es cliente
+            if (!$usuario || $usuario->id_rol !== self::ROLE_CLIENTE) {
+                Log::info('Intento de acceso a tienda rechazado: usuario no es cliente o no existe', [
+                    'email' => $request->email,
+                    'ip' => $request->ip()
+                ]);
+                
+                return response()->json([
+                    'message' => 'Acceso denegado. Solo clientes pueden acceder a la tienda.'
+                ], 403);
+            }
+            
+            // Verificar contraseña
+            if (!Hash::check($request->password, $usuario->password)) {
+                Log::info('Intento de acceso a tienda rechazado: contraseña incorrecta', [
+                    'email' => $request->email,
+                    'ip' => $request->ip()
+                ]);
+                
+                return response()->json([
+                    'message' => 'Credenciales incorrectas'
+                ], 401);
+            }
+            
+            // Crear token para el cliente
+            $token = $usuario->createToken('tienda-client-token')->plainTextToken;
+            
+            Log::info('Login exitoso a tienda', [
+                'user_id' => $usuario->id,
+                'email' => $usuario->email,
+                'ip' => $request->ip()
+            ]);
+            
+            return response()->json([
+                'message' => 'Login exitoso',
+                'user' => [
+                    'id' => $usuario->id,
+                    'nombre' => $usuario->nombre,
+                    'apellido1' => $usuario->apellido1,
+                    'apellido2' => $usuario->apellido2,
+                    'email' => $usuario->email,
+                    'telefono' => $usuario->telefono,
+                ],
+                'token' => $token
+            ]);
+            
+        } catch (\Exception $e) {
+            Log::error('Error en login de tienda', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'email' => $request->email ?? 'no proporcionado'
+            ]);
+            
+            return response()->json([
+                'message' => 'Error al procesar el inicio de sesión',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Registro de nuevo cliente en la tienda (función pública)
+     * 
+     * @param Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
+    public function registroTienda(Request $request)
+    {
+        try {
+            $validator = Validator::make($request->all(), [
+                'nombre' => 'required|string|max:255',
+                'apellido1' => 'required|string|max:255',
+                'apellido2' => 'nullable|string|max:255',
+                'email' => 'required|string|email|max:255|unique:usuario',
+                'password' => 'required|string|min:6|confirmed',
+                'telefono' => 'nullable|string|max:20',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json([
+                    'message' => 'Error de validación',
+                    'errors' => $validator->errors()
+                ], 422);
+            }
+
+            // Crear nuevo cliente (siempre con rol de cliente)
+            $cliente = new Usuario([
+                'nombre' => $request->nombre,
+                'apellido1' => !empty($request->apellido1) ? $request->apellido1 : '-',
+                'apellido2' => $request->apellido2 ?? '',
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'id_rol' => self::ROLE_CLIENTE, // Aseguramos que siempre sea cliente
+                'telefono' => $request->telefono ?? null,
+            ]);
+
+            $cliente->save();
+            
+            // Crear token para el nuevo cliente
+            $token = $cliente->createToken('tienda-client-token')->plainTextToken;
+            
+            Log::info('Nuevo cliente registrado en tienda', [
+                'client_id' => $cliente->id,
+                'email' => $cliente->email,
+                'ip' => $request->ip()
+            ]);
+
+            return response()->json([
+                'message' => 'Registro completado con éxito',
+                'user' => [
+                    'id' => $cliente->id,
+                    'nombre' => $cliente->nombre,
+                    'apellido1' => $cliente->apellido1,
+                    'apellido2' => $cliente->apellido2,
+                    'email' => $cliente->email,
+                    'telefono' => $cliente->telefono,
+                ],
+                'token' => $token
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Error en registro de tienda', [
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+                'datos' => $request->except('password', 'password_confirmation')
+            ]);
+            
+            return response()->json([
+                'message' => 'Error al procesar el registro',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updatePerfilApp(Request $request)
+{
+    try {
+        // Obtener el usuario autenticado
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json([
+                'success' => false, 
+                'message' => 'Usuario no autenticado'
+            ], 401);
+        }
+        
+        // Validar datos
+        $validator = Validator::make($request->all(), [
+            'nombre' => 'sometimes|required|string|max:255',
+            'apellido1' => 'sometimes|required|string|max:255',
+            'apellido2' => 'nullable|string|max:255',
+            'email' => [
+                'sometimes',
+                'required',
+                'email',
+                'max:255',
+                Rule::unique('usuario')->ignore($user->id)
+            ],
+            'telefono' => 'nullable|string|max:20',
+            'current_password' => 'required_with:password|string',
+            'password' => 'nullable|string|min:6|confirmed',
+        ]);
+        
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error de validación',
+                'errors' => $validator->errors()
+            ], 422);
+        }
+        
+        // Verificar la contraseña actual si se quiere cambiar la contraseña
+        if ($request->filled('password')) {
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'La contraseña actual es incorrecta',
+                    'errors' => [
+                        'current_password' => ['La contraseña actual no coincide con nuestros registros']
+                    ]
+                ], 422);
+            }
+        }
+        
+        // Actualizar campos
+        if ($request->filled('nombre')) {
+            $user->nombre = $request->nombre;
+        }
+        
+        if ($request->has('apellido1')) {
+            $user->apellido1 = !empty($request->apellido1) ? $request->apellido1 : '-';
+        }
+        
+        if ($request->has('apellido2')) {
+            $user->apellido2 = $request->apellido2 ?? '';
+        }
+        
+        if ($request->filled('email')) {
+            $user->email = strtolower($request->email);
+        }
+        
+        if ($request->filled('telefono')) {
+            $user->telefono = $request->telefono;
+        }
+        
+        if ($request->filled('password')) {
+            $user->password = Hash::make($request->password);
+        }
+        
+        // Guardar cambios
+        $user->save();
+        
+        Log::info('Usuario actualizó su perfil desde la app', [
+            'user_id' => $user->id,
+            'email' => $user->email,
+            'ip' => $request->ip()
+        ]);
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Perfil actualizado correctamente',
+            'user' => [
+                'id' => $user->id,
+                'nombre' => $user->nombre,
+                'apellido1' => $user->apellido1,
+                'apellido2' => $user->apellido2,
+                'email' => $user->email,
+                'telefono' => $user->telefono
+            ]
+        ]);
+        
+    } catch (\Exception $e) {
+        Log::error('Error al actualizar perfil de usuario desde app', [
+            'user_id' => $request->user()->id ?? 'unknown',
+            'message' => $e->getMessage(),
+            'trace' => $e->getTraceAsString()
+        ]);
+        
+        return response()->json([
+            'success' => false,
+            'message' => 'Error al actualizar el perfil',
+            'error' => $e->getMessage()
+        ], 500);
+    }
+}
 }

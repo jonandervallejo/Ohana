@@ -603,4 +603,45 @@ class ProductoController extends Controller
     }
 }
     
+/**
+ * Obtener productos por IDs (para favoritos desde localStorage)
+ *
+ * @param Request $request
+ * @return \Illuminate\Http\JsonResponse
+ */
+public function obtenerProductosPorIds(Request $request)
+{
+    try {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['error' => 'IDs de productos inválidos'], 422);
+        }
+
+        $ids = $request->ids;
+        
+        if (empty($ids)) {
+            return response()->json(['data' => []]);
+        }
+        
+        // Obtener productos con sus relaciones  
+        $productos = Producto::with(['categoria', 'stocks'])
+            ->whereIn('id', $ids)
+            ->get();
+        
+        // Transformar imágenes de productos
+        $productosTransformados = $this->transformProductImages($productos);
+        
+        return response()->json([
+            'data' => $productosTransformados
+        ]);
+    } catch (\Exception $e) {
+        Log::error('Error al obtener productos por IDs: ' . $e->getMessage());
+        Log::error($e->getTraceAsString());
+        return response()->json(['error' => 'Error al recuperar productos favoritos'], 500);
+    }
+}
 }

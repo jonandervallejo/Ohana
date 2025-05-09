@@ -34,6 +34,8 @@ Route::get('/productos/buscar', [ProductoController::class, 'buscar']); // Movid
 Route::get('/productos/genero/{genero}', [ProductoController::class, 'getProductosPorGenero']); // Movido arriba
 Route::get('/productos/imagenes', [ProductosController::class, 'obtenerImagenes']);
 Route::get('/productos/categoria/{id_categoria}', [ProductoController::class, 'productosPorCategoria']);
+// Ruta para obtener productos por IDs (favoritos)
+Route::post('/productos/por-ids', [ProductoController::class, 'obtenerProductosPorIds']);
 Route::get('/productos/{id}', [ProductoController::class, 'show']); // Movido abajo
 
 // Rutas protegidas para productos (admin)
@@ -53,7 +55,23 @@ Route::post('password/email', [PasswordResetController::class, 'sendResetLinkEma
 Route::post('password/reset', [PasswordResetController::class, 'reset'])->name('password.update');
 Route::get('password/reset/{token}', function($token) {
     $email = request('email', '');
-    return redirect()->away("http://ohanatienda.ddns.net:3000/new-password/{$token}?email={$email}");
+    $source = request('from', ''); // Captura el parámetro 'from' (app o web)
+    
+    // Detectar automáticamente dispositivos móviles si no se especifica la fuente
+    if (empty($source)) {
+        $userAgent = request()->header('User-Agent');
+        $isMobile = preg_match('/(android|iphone|ipad|mobile|okhttp|expo)/i', $userAgent);
+        $source = $isMobile ? 'app' : 'web';
+    }
+    
+    // Redirigir según el origen
+    if ($source === 'app') {
+        // URL profunda para la app móvil
+        return redirect()->away("ohana://reset-password?token={$token}&email={$email}");
+    } else {
+        // URL para la web
+        return redirect()->away("http://ohanatienda.ddns.net:3000/new-password/{$token}?email={$email}");
+    }
 })->name('password.reset');
 
 // Rutas del perfil y cierre de sesión
@@ -62,7 +80,6 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/profile/update', [UserController::class, 'updateProfile']);
     Route::post('/profile/password', [UserController::class, 'changePassword']);
     Route::post('/logout', [AuthController::class, 'logout']);
-    
 });
 
 // Rutas para datos públicos
@@ -86,3 +103,58 @@ Route::put('/ventas/{id}/completar', [VentaController::class, 'completar']);
 Route::put('/ventas/{id}/cancelar', [VentaController::class, 'cancelar']);
 Route::get('/ventas-estadisticas', [VentaController::class, 'estadisticas']);
 Route::delete('/ventas/{id}', [VentaController::class, 'destroy']);
+
+// NUEVAS RUTAS PARA LA TIENDA
+Route::prefix('tienda')->group(function() {
+    // Rutas públicas para acceso a la tienda
+    Route::post('/login', [UsuarioController::class, 'loginTienda']);
+    Route::post('/registro', [UsuarioController::class, 'registroTienda']);
+    
+    // Rutas protegidas para la tienda (requieren autenticación)
+    Route::middleware('auth:sanctum')->group(function() {
+        // Obtener perfil del cliente
+        Route::get('/perfil', function (Request $request) {
+            $userId = $request->user()->id;
+            return app()->make(UsuarioController::class)->show($request, $userId);
+        });
+        
+        // Actualizar perfil del cliente (versión web)
+        Route::put('/perfil', function (Request $request) {
+            $userId = $request->user()->id;
+            return app()->make(UsuarioController::class)->update($request, $userId);
+        });
+        
+        // Actualizar perfil del cliente (versión app móvil)
+        Route::post('/update-perfil', [UsuarioController::class, 'updatePerfilApp']);
+        
+        // Eliminar cuenta del cliente
+        Route::delete('/cuenta', function (Request $request) {
+            $cliente = $request->user();
+            
+            // Verificar que es un cliente
+            if ($cliente->id_rol != UsuarioController::ROLE_CLIENTE) {
+                return response()->json(['message' => 'Operación solo permitida para clientes'], 403);
+            }
+            
+            // Revocar tokens antes de eliminar
+            $cliente->tokens()->delete();
+            
+            // Eliminar usuario
+            $cliente->delete();
+            
+            Log::info('Cliente eliminó su cuenta en tienda', [
+                'client_id' => $cliente->id,
+                'email' => $cliente->email,
+                'ip' => $request->ip()
+            ]);
+            
+            return response()->json(['message' => 'Cuenta eliminada correctamente']);
+        });
+        
+        // Cerrar sesión (logout) para clientes
+        Route::post('/logout', function (Request $request) {
+            $request->user()->currentAccessToken()->delete();
+            return response()->json(['message' => 'Sesión cerrada correctamente']);
+        });
+    });
+});
