@@ -108,6 +108,13 @@ const EditarProducto = () => {
     tipo: '',
   });
   
+  // Definir las opciones para el tipo de producto
+  const tipoOptions = [
+    { value: 'Mujer', label: 'Mujer' },
+    { value: 'Hombre', label: 'Hombre' },
+    { value: 'Unisex', label: 'Unisex' }
+  ];
+  
   const [mainImage, setMainImage] = useState(null);
   const [carouselImages, setCarouselImages] = useState([]);
   const [newImages, setNewImages] = useState([]);
@@ -562,15 +569,23 @@ useEffect(() => {
                   </select>
                 </div>
                 
+                {/* MODIFICADO: Cambio de input texto a select para tipo */}
                 <div className="form-group">
                   <label htmlFor="tipo">Tipo</label>
-                  <input
-                    type="text"
+                  <select
                     id="tipo"
                     name="tipo"
                     value={formData.tipo}
                     onChange={handleChange}
-                  />
+                    className="form-select"
+                  >
+                    <option value="">Selecciona el tipo</option>
+                    {tipoOptions.map(option => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 
                 <div className="form-group full-width">

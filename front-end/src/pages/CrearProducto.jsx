@@ -119,6 +119,13 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
     talla: ''
   };
 
+  // Definir las opciones para el tipo de producto
+  const tipoOptions = [
+    { value: 'Mujer', label: 'Mujer' },
+    { value: 'Hombre', label: 'Hombre' },
+    { value: 'Unisex', label: 'Unisex' }
+  ];
+
   const [formData, setFormData] = useState(initialFormData);
   const [mainImage, setMainImage] = useState(null);
   const [mainImagePreview, setMainImagePreview] = useState('');
@@ -331,15 +338,23 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
           </select>
         </div>
 
+        {/* MODIFICADO: Campo de tipo cambiado a select con opciones predefinidas */}
         <div className="form-group">
           <label htmlFor="tipo">Tipo</label>
-          <input
-            type="text"
+          <select
             id="tipo"
             name="tipo"
             value={formData.tipo}
             onChange={handleChange}
-          />
+            className="form-select"
+          >
+            <option value="">Selecciona el tipo</option>
+            {tipoOptions.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div className="form-group">
