@@ -8,6 +8,7 @@ import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './css/Productos.css';
 
 const API_URL = 'https://ohanatienda.ddns.net/api';
+const BASE_URL = 'https://ohanatienda.ddns.net';
 
 const ProductosPage = () => {
   const [productos, setProductos] = useState([]);
@@ -443,6 +444,7 @@ const ProductosPage = () => {
                 esGestion={true}
                 onProductoActualizado={handleProductoActualizado}
                 onProductoEliminado={confirmarEliminacion}
+                baseUrl={BASE_URL}
               />
             </div>
           ))}
