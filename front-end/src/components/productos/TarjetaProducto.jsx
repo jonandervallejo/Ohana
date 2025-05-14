@@ -4,7 +4,7 @@ import './css/TarjetaProducto.css';
 import DetalleProductoModal from './DetalleProductoModal';
 import Toast from '../ui/Toast';
 
-const API_BASE_URL = 'http://ohanatienda.ddns.net:8000';
+const API_BASE_URL = 'https://ohanatienda.ddns.net';
 
 const TarjetaProducto = ({ producto, esGestion = false, onProductoActualizado, onProductoEliminado }) => {
   const navigate = useNavigate();

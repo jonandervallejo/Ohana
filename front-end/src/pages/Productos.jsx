@@ -7,7 +7,7 @@ import ConfirmacionModal from '../components/ui/CofirmacionModal';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './css/Productos.css';
 
-const API_URL = 'http://ohanatienda.ddns.net:8000/api';
+const API_URL = 'https://ohanatienda.ddns.net/api';
 
 const ProductosPage = () => {
   const [productos, setProductos] = useState([]);

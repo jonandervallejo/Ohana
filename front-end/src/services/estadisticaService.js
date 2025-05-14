@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Base API URL for all requests
-const API_URL = 'http://ohanatienda.ddns.net:8000/api';
+const API_URL = 'https://ohanatienda.ddns.net/api';
 
 // Create an axios instance with default config
 const api = axios.create({

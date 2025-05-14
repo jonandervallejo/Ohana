@@ -579,7 +579,7 @@ class ProductoController extends Controller
         return response()->json(['error' => 'Error al obtener productos por género'], 500);
     }
 }
-
+ 
     public function buscar(Request $request)
 {
     try {

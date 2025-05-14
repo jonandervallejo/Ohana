@@ -70,7 +70,7 @@ Route::get('password/reset/{token}', function($token) {
         return redirect()->away("ohana://reset-password?token={$token}&email={$email}");
     } else {
         // URL para la web
-        return redirect()->away("http://ohanatienda.ddns.net:3000/new-password/{$token}?email={$email}");
+        return redirect()->away("https://ohanatienda.ddns.net/:3000/new-password/{$token}?email={$email}");
     }
 })->name('password.reset');
 

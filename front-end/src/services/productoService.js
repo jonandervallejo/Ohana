@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'http://ohanatienda.ddns.net:8000/api';
+const API_URL = 'https://ohanatienda.ddns.net/api';
 
 // Función para obtener el token de autenticación
 const getAuthToken = () => {

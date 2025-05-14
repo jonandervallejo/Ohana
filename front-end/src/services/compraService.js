@@ -1,4 +1,4 @@
-const API_URL = 'http://ohanatienda.ddns.net:8000/api';
+const API_URL = 'https://ohanatienda.ddns.net/api';
 
 export const obtenerPedidosPendientes = async () => {
   try {

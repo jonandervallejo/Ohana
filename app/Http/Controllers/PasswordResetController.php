@@ -54,7 +54,7 @@ class PasswordResetController extends Controller
             $user = User::where('email', $request->email)->first();
             
             // Construir URL para la app móvil (asegúrate de que es accesible desde la app)
-            $resetUrl = env('FRONTEND_URL', 'http://ohanatienda.ddns.net:8000') . 
+            $resetUrl = env('FRONTEND_URL', 'https://ohanatienda.ddns.net') . 
                         '/reset-password?token=' . $token . 
                         '&email=' . urlencode($request->email);
             

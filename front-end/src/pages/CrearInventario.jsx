@@ -5,7 +5,7 @@ import { obtenerProductosConStock } from '../services/productoService';
 import Toast from '../components/ui/Toast';
 import './css/Inventario.css';
 
-const API_URL = 'http://ohanatienda.ddns.net:8000/api';
+const API_URL = 'https://ohanatienda.ddns.net/api';
 
 const CrearInventario = () => {
   const navigate = useNavigate();
