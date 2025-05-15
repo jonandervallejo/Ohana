@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './css/CrearProducto.css';
 import Toast from '../components/ui/Toast';
-const API_URL = 'https://ohanatienda.ddns.net/api';
+import { API_URL, resourceUrl } from '../config/config';
 
 const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange, previews, onRemove }) => {
   const fileInputRef = useRef(null);
@@ -24,7 +24,15 @@ const ImageSelector = React.memo(({ label, buttonText, icon, multiple, onChange,
       return null;
     }
 
-    return file;
+    // Crear un nombre de archivo seguro sin caracteres especiales
+    const timestamp = Date.now();
+    const fileExt = file.name.split('.').pop().toLowerCase();
+    const safeName = `producto_${timestamp}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+    
+    return new File([file], safeName, {
+      type: file.type,
+      lastModified: timestamp
+    });
   };
 
   const handleFileChange = (e) => {
@@ -145,7 +153,75 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
     });
   };
 
-  const handleMainImageChange = useCallback((e) => {
+  // Función mejorada para comprimir imágenes si son muy grandes
+  const compressImage = (file, maxWidth = 800) => {
+    return new Promise((resolve, reject) => {
+      // Si el archivo es pequeño (< 300KB), no comprimir
+      if (file.size < 300 * 1024) {
+        resolve(file);
+        return;
+      }
+      
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target.result;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          
+          // Comprimir si la imagen es grande
+          if (width > maxWidth) {
+            const ratio = width / height;
+            width = maxWidth;
+            height = Math.round(width / ratio);
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          
+          // Crear nombre de archivo seguro
+          const timestamp = Date.now();
+          const fileExt = file.name.split('.').pop().toLowerCase();
+          const safeName = `producto_${timestamp}.${fileExt === 'png' ? 'png' : 'jpg'}`;
+          const mimeType = fileExt === 'png' ? 'image/png' : 'image/jpeg';
+          
+          // Convertir a blob con calidad reducida
+          canvas.toBlob((blob) => {
+            if (!blob) {
+              resolve(file);
+              return;
+            }
+            
+            const newFile = new File([blob], safeName, {
+              type: mimeType,
+              lastModified: timestamp,
+            });
+            
+            console.log(`Imagen comprimida: ${Math.round(file.size/1024)}KB → ${Math.round(newFile.size/1024)}KB`);
+            resolve(newFile);
+          }, fileExt === 'png' ? 'image/png' : 'image/jpeg', 0.7); // Calidad 70%
+        };
+        
+        img.onerror = (err) => {
+          console.error("Error al cargar imagen:", err);
+          resolve(file); // Usar original si falla
+        };
+      };
+      
+      reader.onerror = (error) => {
+        console.error("Error al leer archivo:", error);
+        resolve(file); // Usar original si falla
+      };
+    });
+  };
+
+  const handleMainImageChange = useCallback(async (e) => {
     try {
       const file = Array.isArray(e.target.files) ? e.target.files[0] : e.target.files[0];
       if (!file) return;
@@ -153,19 +229,22 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
       if (mainImagePreview) {
         URL.revokeObjectURL(mainImagePreview);
       }
-
-      setMainImage(file);
-      const previewURL = URL.createObjectURL(file);
+      
+      // Comprimir imagen principal si es necesario
+      const processedFile = await compressImage(file);
+      setMainImage(processedFile);
+      
+      const previewURL = URL.createObjectURL(processedFile);
       setMainImagePreview(previewURL);
       
       localStorage.setItem('hasMainImage', 'true');
     } catch (error) {
       console.error("Error al manejar la imagen principal:", error);
-      alert("Error al procesar la imagen principal. Por favor, intenta con otra imagen.");
+      alert("Error al procesar la imagen principal. Por favor, intenta con otra imagen más pequeña.");
     }
   }, [mainImagePreview]);
 
-  const handleGalleryImagesChange = useCallback((e) => {
+  const handleGalleryImagesChange = useCallback(async (e) => {
     try {
       const files = Array.isArray(e.target.files) ? e.target.files : Array.from(e.target.files || []);
       if (!files.length) return;
@@ -181,16 +260,19 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
       }
       
       const filesToAdd = files.slice(0, remainingSlots);
-
-      filesToAdd.forEach(file => {
-        newImages.push(file);
+      
+      // Procesar y comprimir cada imagen
+      for (const file of filesToAdd) {
         try {
-          newPreviews.push(URL.createObjectURL(file));
+          const processedFile = await compressImage(file);
+          newImages.push(processedFile);
+          newPreviews.push(URL.createObjectURL(processedFile));
         } catch (err) {
-          console.error("Error creando URL para preview:", err);
-          newPreviews.push("data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGQAAABkCAYAAABw4pVUAAAABmJLR0QA/wD/AP+gvaeTAAAAxklEQVR4nO3bsQ3CMBRF0UBYgIqePWAIamZgFkZgAqrUoXCBBVhEyvecc+tI77ePFNlxAAAAAAAAeKhp+Y5vZ9y3Le9TpkmS430/Z908Z9yXZO9TpkmSfb/Oz5/35N24LjCttX7vU0q5tDiG31VVm4jY/O1dMCRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMiRDMqRNRFxbHMN/VNUhIp6tbwEAAAAAAACAlQ/sBg5j3UsCgQAAAABJRU5ErkJggg==");
+          console.error("Error procesando imagen:", err);
+          // Si falla, intentar usar un placeholder
+          newPreviews.push("/assets/placeholder-product.png");
         }
-      });
+      }
 
       setGalleryImages(newImages);
       setGalleryPreviews(newPreviews);
@@ -198,7 +280,7 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
       localStorage.setItem('galleryImageCount', newImages.length);
     } catch (error) {
       console.error("Error al manejar las imágenes de la galería:", error);
-      alert("Error al procesar las imágenes de la galería. Por favor, intenta con otras imágenes.");
+      alert("Error al procesar las imágenes. Intenta con imágenes más pequeñas.");
     }
   }, [galleryImages, galleryPreviews]);
 
@@ -212,7 +294,9 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
   }, [mainImagePreview]);
 
   const removeGalleryImage = useCallback((index) => {
-    URL.revokeObjectURL(galleryPreviews[index]);
+    if (galleryPreviews[index] && galleryPreviews[index].startsWith('blob:')) {
+      URL.revokeObjectURL(galleryPreviews[index]);
+    }
     setGalleryImages(prev => prev.filter((_, i) => i !== index));
     setGalleryPreviews(prev => prev.filter((_, i) => i !== index));
     
@@ -220,7 +304,7 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
     localStorage.setItem('galleryImageCount', newCount > 0 ? newCount : '');
   }, [galleryImages, galleryPreviews]);
 
-  const handleSubmit = useCallback((e) => {
+  const handleSubmit = useCallback(async (e) => {
     e.preventDefault();
     setError('');
 
@@ -238,26 +322,37 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
     });
 
     if (mainImage) {
-      productoData.append('imagen', mainImage);
-      console.log("Imagen principal agregada:", mainImage.name);
+      // Verificar si necesita más compresión
+      if (mainImage.size > 1 * 1024 * 1024) { // Si es mayor a 1MB
+        const recompressed = await compressImage(mainImage, 600);
+        productoData.append('imagen', recompressed);
+        console.log("Imagen principal comprimida:", recompressed.name);
+      } else {
+        productoData.append('imagen', mainImage);
+        console.log("Imagen principal agregada:", mainImage.name);
+      }
     }
 
     if (galleryImages.length > 0) {
       const imagenesArray = [];
       
       for (let i = 0; i < galleryImages.length; i++) {
+        // Verificar si necesita más compresión
+        let imgFile = galleryImages[i];
+        if (imgFile.size > 1 * 1024 * 1024) { // Si es mayor a 1MB
+          imgFile = await compressImage(imgFile, 600);
+        }
+        
+        productoData.append(`imagenes_files[]`, imgFile);
+        
         const timestamp = Date.now();
         const imageName = `galeria_${timestamp}_${i}.jpg`;
-        
-        productoData.append(`imagenes_files[]`, galleryImages[i]);
-        
         imagenesArray.push(imageName);
       }
       
       productoData.append('imagenes', JSON.stringify(imagenesArray));
       
       console.log("Imágenes de galería agregadas:", galleryImages.length);
-      console.log("JSON de imágenes:", JSON.stringify(imagenesArray));
     }
 
     localStorage.removeItem('productoFormData');
@@ -269,12 +364,17 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
 
   useEffect(() => {
     return () => {
-      if (mainImagePreview) {
+      // Limpieza de URLs de objetos al desmontar
+      if (mainImagePreview && mainImagePreview.startsWith('blob:')) {
         URL.revokeObjectURL(mainImagePreview);
       }
-      galleryPreviews.forEach(url => URL.revokeObjectURL(url));
+      galleryPreviews.forEach(url => {
+        if (url && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
     };
-  }, []);
+  }, [mainImagePreview, galleryPreviews]);
 
   return (
     <div className="formulario-producto-container">
@@ -338,7 +438,6 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
           </select>
         </div>
 
-        {/* MODIFICADO: Campo de tipo cambiado a select con opciones predefinidas */}
         <div className="form-group">
           <label htmlFor="tipo">Tipo</label>
           <select
@@ -369,7 +468,7 @@ const FormularioProducto = ({ categorias, onSubmit, onCancel, guardando }) => {
         </div>
 
         <ImageSelector
-          label="Imagen Principal"
+          label="Imagen Principal *"
           buttonText="Tomar/Seleccionar imagen principal"
           icon="fa-camera"
           multiple={false}
@@ -463,7 +562,8 @@ const CrearProducto = () => {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        timeout: 60000 // 60 segundos de timeout
       });
       
       console.log("Respuesta del servidor:", response.data);
@@ -486,14 +586,9 @@ const CrearProducto = () => {
       if (error.response) {
         console.error('Respuesta del servidor:', error.response.data);
         console.error('Estado HTTP:', error.response.status);
-        console.error('Encabezados:', error.response.headers);
-      } else if (error.request) {
-        console.error('No se recibió respuesta del servidor');
-      } else {
-        console.error('Error al configurar la petición:', error.message);
       }
       
-      let errorMsg = 'Error al guardar el producto. Por favor, intenta de nuevo.';
+      let errorMsg = 'Error al guardar el producto. Intenta usar imágenes más pequeñas.';
       
       if (error.response) {
         if (error.response.data.errors) {
@@ -501,6 +596,8 @@ const CrearProducto = () => {
         } else if (error.response.data.message) {
           errorMsg = error.response.data.message;
         }
+      } else if (error.code === 'ECONNABORTED') {
+        errorMsg = 'La operación tomó demasiado tiempo. Intenta con imágenes más pequeñas.';
       }
       
       setError(errorMsg);
@@ -547,7 +644,7 @@ const CrearProducto = () => {
           width: '100%',
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
           padding: '2rem',
-          margin: '0 auto'  // Centra el contenedor horizontalmente
+          margin: '0 auto'
         }}>
           <div className="spinner">
             <i className="fas fa-spinner fa-spin fa-3x"></i>

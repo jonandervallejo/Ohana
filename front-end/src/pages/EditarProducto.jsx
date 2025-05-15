@@ -4,9 +4,9 @@ import axios from 'axios';
 import './css/EditarProducto.css';
 import Toast from '../components/ui/Toast';
 import Layout from '../components/layout/Layout';
+import { API_URL, resourceUrl } from '../config/config'; // Importar de config
 
-const API_URL = 'https://ohanatienda.ddns.net/api';
-const BASE_URL = API_URL.replace('/api', '');
+const BASE_URL = 'https://ohanatienda.ddns.net'; // URL base fijo para producción
 
 const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
@@ -59,6 +59,12 @@ const DraggableImage = ({ image, index, moveImage, setAsMain, removeImage, isMai
           src={image.url} 
           alt={`Imagen ${index + 1}`} 
           className="draggable-image"
+          loading="lazy"
+          onError={(e) => {
+            // Fallback si la imagen no carga
+            console.error(`Error cargando imagen: ${image.url}`);
+            e.target.src = '/assets/placeholder-product.png';
+          }}
         />
         
         <div className="image-actions">
@@ -137,7 +143,28 @@ const EditarProducto = () => {
     }
   }, []);
   
-useEffect(() => {
+  // Función para normalizar URLs
+  const normalizeUrl = (url) => {
+    if (!url) return '';
+    
+    // Convertir URLs relativas a absolutas
+    if (!url.startsWith('http')) {
+      return `${BASE_URL}/${url.replace(/^\/+/, '')}`;
+    }
+    
+    // Reemplazar localhost o 127.0.0.1 con dominio correcto
+    url = url.replace(
+      /https?:\/\/(localhost|127\.0\.0\.1)(:\d+)?/g, 
+      BASE_URL
+    );
+    
+    // Asegurar que usamos HTTPS
+    url = url.replace(/^http:\/\//, 'https://');
+    
+    return url;
+  };
+  
+  useEffect(() => {
     const cargarProducto = async () => {
         try {
             setLoading(true);
@@ -154,10 +181,12 @@ useEffect(() => {
                 tipo: producto.tipo || '',
             });
             
+            // Imagen principal
             if (producto.imagen) {
+                const mainImgUrl = normalizeUrl(producto.imagen);
                 const mainImg = {
                     id: 'main',
-                    url: `${BASE_URL}/${producto.imagen}`,
+                    url: mainImgUrl,
                     file: null,
                     isOriginal: true,
                     path: producto.imagen
@@ -165,15 +194,21 @@ useEffect(() => {
                 setMainImage(mainImg);
             }
             
+            // Imágenes de carrusel
             if (producto.imagenes && producto.imagenes.length > 0) {
-                const carouselImgs = producto.imagenes.map((img, index) => ({
-                    id: `carousel-${index}`,
-                    url: `${BASE_URL}/${img.ruta}`,
-                    file: null,
-                    isOriginal: true,
-                    path: img.ruta,
-                    orden: img.orden
-                }));
+                const carouselImgs = producto.imagenes.map((img, index) => {
+                    // Asegurar que la ruta es absoluta y usa HTTPS
+                    const imgUrl = normalizeUrl(img.ruta);
+                    
+                    return {
+                        id: `carousel-${index}`,
+                        url: imgUrl,
+                        file: null,
+                        isOriginal: true,
+                        path: img.ruta,
+                        orden: img.orden || index
+                    };
+                });
                 
                 carouselImgs.sort((a, b) => a.orden - b.orden);
                 setCarouselImages(carouselImgs);
@@ -189,7 +224,13 @@ useEffect(() => {
     
     cargarProducto();
     cargarCategorias();
-}, [id]);
+    
+    document.title = 'Editar Producto - Ohana';
+    
+    return () => {
+      document.title = 'Ohana';
+    };
+}, [id, cargarCategorias]);
 
 
   const handleChange = (e) => {
@@ -200,37 +241,40 @@ useEffect(() => {
     });
   };
   
-  const processImage = (file) => {
-    return new Promise((resolve) => {
-      if (file.size <= 1024 * 1024) {
-        const reader = new FileReader();
-        reader.onload = (e) => {
-          resolve({
-            file: file,
-            url: e.target.result
-          });
-        };
-        reader.readAsDataURL(file);
+  // Función mejorada de compresión de imágenes
+  const compressImage = (file, maxWidth = 800) => { // Reducido a 800px para imágenes más pequeñas
+    return new Promise((resolve, reject) => {
+      // Si el archivo es muy pequeño, no comprimir
+      if (file.size < 300 * 1024) { // Reducido a 300KB
+        resolve({
+          file: file,
+          url: URL.createObjectURL(file)
+        });
         return;
       }
       
+      // Crear un nombre de archivo seguro sin caracteres especiales
+      const timestamp = Date.now();
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      const mimeType = fileExt === 'png' ? 'image/png' : 'image/jpeg';
+      const safeName = `product_${timestamp}.${fileExt === 'png' ? 'png' : 'jpg'}`;
+      
       const reader = new FileReader();
-      reader.onload = (e) => {
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
         const img = new Image();
+        img.src = event.target.result;
+        
         img.onload = () => {
           const canvas = document.createElement('canvas');
           let width = img.width;
           let height = img.height;
           
-          if (width > 1200 || height > 1200) {
+          // Más compresión para imágenes grandes
+          if (width > maxWidth) {
             const ratio = width / height;
-            if (width > height) {
-              width = 1200;
-              height = Math.round(width / ratio);
-            } else {
-              height = 1200;
-              width = Math.round(height * ratio);
-            }
+            width = maxWidth;
+            height = Math.round(width / ratio);
           }
           
           canvas.width = width;
@@ -238,40 +282,71 @@ useEffect(() => {
           const ctx = canvas.getContext('2d');
           ctx.drawImage(img, 0, 0, width, height);
           
+          // Calidad reducida para JPEG (0.7 = 70%)
           canvas.toBlob((blob) => {
-            const optimizedFile = new File([blob], file.name, {
-              type: 'image/jpeg',
-              lastModified: Date.now()
+            if (!blob) {
+              console.error("Error al comprimir la imagen");
+              resolve({
+                file: file,
+                url: URL.createObjectURL(file)
+              });
+              return;
+            }
+            
+            const optimizedFile = new File([blob], safeName, {
+              type: mimeType,
+              lastModified: timestamp
             });
+            
+            console.log(`Imagen comprimida: ${Math.round(file.size/1024)}KB → ${Math.round(optimizedFile.size/1024)}KB`);
             
             resolve({
               file: optimizedFile,
-              url: canvas.toDataURL('image/jpeg', 0.8)
+              url: URL.createObjectURL(blob)
             });
-          }, 'image/jpeg', 0.8);
+          }, mimeType, 0.7); // Calidad reducida a 70%
         };
-        img.src = e.target.result;
+        
+        img.onerror = () => {
+          console.error("Error cargando imagen para compresión");
+          resolve({
+            file: file,
+            url: URL.createObjectURL(file)
+          });
+        };
       };
-      reader.readAsDataURL(file);
+      
+      reader.onerror = (error) => {
+        console.error("Error leyendo el archivo:", error);
+        reject(error);
+      };
     });
   };
   
   const handleMainImageChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    if (!file.type.startsWith('image/')) {
-      setError('Por favor, selecciona un archivo de imagen válido.');
-      return;
-    }
-    
-    if (file.size > 5 * 1024 * 1024) {
-      setError('La imagen no debe superar los 5MB.');
-      return;
-    }
-    
     try {
-      const processed = await processImage(file);
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      if (!file.type.startsWith('image/')) {
+        setError('Por favor, selecciona un archivo de imagen válido.');
+        return;
+      }
+      
+      if (file.size > 5 * 1024 * 1024) {
+        setError('La imagen no debe superar los 5MB.');
+        return;
+      }
+      
+      // Crear un nombre de archivo seguro
+      const fileExt = file.name.split('.').pop().toLowerCase();
+      const safeFile = new File([file], `main_${Date.now()}.${fileExt}`, {
+        type: file.type,
+        lastModified: file.lastModified
+      });
+      
+      // Comprimir imagen antes de subir
+      const processed = await compressImage(safeFile);
       
       if (mainImage && mainImage.isOriginal) {
         setImagesToRemove(prev => [...prev, mainImage.path]);
@@ -283,46 +358,60 @@ useEffect(() => {
         file: processed.file,
         isOriginal: false
       });
+      
     } catch (error) {
-      console.error('Error al procesar la imagen:', error);
-      setError('Error al procesar la imagen. Intenta con otra.');
+      console.error('Error al procesar la imagen principal:', error);
+      setError('Error al procesar la imagen. Intenta con otra imagen más pequeña.');
     }
   };
   
   const handleCarouselImagesChange = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
-    
-    const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
-    if (invalidFiles.length > 0) {
-      setError('Algunos archivos seleccionados no son imágenes válidas.');
-      return;
-    }
-    
-    const largeFiles = files.filter(file => file.size > 5 * 1024 * 1024);
-    if (largeFiles.length > 0) {
-      setError('Algunas imágenes exceden el tamaño máximo de 5MB.');
-      return;
-    }
-    
     try {
-      const processedImages = await Promise.all(
-        files.map(async (file) => {
-          const processed = await processImage(file);
-          return {
-            id: `new-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+      const files = Array.from(e.target.files);
+      if (files.length === 0) return;
+      
+      const invalidFiles = files.filter(file => !file.type.startsWith('image/'));
+      if (invalidFiles.length > 0) {
+        setError('Algunos archivos seleccionados no son imágenes válidas.');
+        return;
+      }
+      
+      const largeFiles = files.filter(file => file.size > 5 * 1024 * 1024);
+      if (largeFiles.length > 0) {
+        setError('Algunas imágenes exceden el tamaño máximo de 5MB.');
+        return;
+      }
+      
+      // Procesar y comprimir cada imagen
+      const processedImages = [];
+      
+      for (const file of files) {
+        try {
+          // Crear un nombre de archivo seguro
+          const fileExt = file.name.split('.').pop().toLowerCase();
+          const safeFile = new File([file], `gallery_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`, {
+            type: file.type,
+            lastModified: file.lastModified
+          });
+          
+          const processed = await compressImage(safeFile);
+          processedImages.push({
+            id: `new-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`,
             url: processed.url,
             file: processed.file,
             isOriginal: false
-          };
-        })
-      );
+          });
+        } catch (err) {
+          console.error("Error procesando imagen:", err);
+        }
+      }
       
       setNewImages(prev => [...prev, ...processedImages]);
       setCarouselImages(prev => [...prev, ...processedImages]);
+      
     } catch (error) {
-      console.error('Error al procesar las imágenes:', error);
-      setError('Error al procesar algunas imágenes. Intenta de nuevo.');
+      console.error('Error al procesar las imágenes de carrusel:', error);
+      setError('Error al procesar algunas imágenes. Intenta de nuevo con imágenes más pequeñas.');
     }
   };
   
@@ -340,6 +429,7 @@ useEffect(() => {
   const setAsMain = (index) => {
     const selectedImage = carouselImages[index];
     
+    // Si hay una imagen principal actual y es original, añadirla a la lista de eliminación
     if (mainImage && mainImage.isOriginal) {
       setImagesToRemove(prev => [...prev, mainImage.path]);
     }
@@ -349,11 +439,14 @@ useEffect(() => {
       id: `carousel-${Date.now()}`
     } : null;
     
+    // Establecer la imagen seleccionada como principal
     setMainImage(selectedImage);
     
+    // Quitar la imagen seleccionada del carrusel
     const newCarouselImages = [...carouselImages];
     newCarouselImages.splice(index, 1);
     
+    // Añadir la antigua imagen principal al carrusel si existe
     if (currentMainForCarousel) {
       newCarouselImages.push(currentMainForCarousel);
     }
@@ -364,12 +457,15 @@ useEffect(() => {
   const removeImage = (index) => {
     const imageToRemove = carouselImages[index];
     
+    // Si es una imagen original, añadirla a la lista de eliminación
     if (imageToRemove.isOriginal) {
       setImagesToRemove(prev => [...prev, imageToRemove.path]);
     }
     
+    // Quitar la imagen del carrusel
     setCarouselImages(prev => prev.filter((_, i) => i !== index));
     
+    // Si es una imagen nueva, quitarla también de newImages
     if (!imageToRemove.isOriginal) {
       setNewImages(prev => prev.filter(img => img.id !== imageToRemove.id));
     }
@@ -377,6 +473,7 @@ useEffect(() => {
   
   const removeMainImage = () => {
     if (mainImage) {
+      // Si es una imagen original, añadirla a la lista de eliminación
       if (mainImage.isOriginal) {
         setImagesToRemove(prev => [...prev, mainImage.path]);
       }
@@ -387,11 +484,11 @@ useEffect(() => {
   const handleSubmit = async (e) => {
     e.preventDefault();
   
+    // Validación de campos obligatorios
     if (!formData.nombre || !formData.descripcion || !formData.precio) {
       setError('Por favor completa los campos obligatorios.');
       return;
     }
-  
   
     try {
       setGuardando(true);
@@ -400,80 +497,126 @@ useEffect(() => {
       const token = localStorage.getItem('token');
       const datosEnvio = new FormData();
   
+      // Añadir campos del formulario
       Object.keys(formData).forEach(key => {
-        if (formData[key] !== null && formData[key] !== undefined) {
+        if (formData[key] !== null && formData[key] !== undefined && formData[key] !== '') {
           datosEnvio.append(key, formData[key]);
         }
       });
   
+      // Manejar imagen principal
       if (mainImage && !mainImage.isOriginal && mainImage.file) {
-        datosEnvio.append('imagen_principal', mainImage.file);
-      }
-      else if (mainImage && mainImage.isOriginal && mainImage.path) {
-        datosEnvio.append('imagen_a_principal', mainImage.path);
-        console.log("Estableciendo imagen de carrusel como principal:", mainImage.path);
-      }
-      
-      if (!mainImage && !imagesToRemove.some(path => path === producto.imagen)) {
+        // Verificar una vez más si la imagen es válida
+        const imgFile = mainImage.file;
+        if (imgFile.size > 2 * 1024 * 1024) { // Si es mayor a 2MB
+          const recompressed = await compressImage(imgFile, 600); // Comprimir aún más
+          datosEnvio.append('imagen_principal', recompressed.file);
+        } else {
+          datosEnvio.append('imagen_principal', imgFile);
+        }
+      } else if (mainImage && mainImage.isOriginal && mainImage.path) {
+        // Normalizar la ruta
+        const normalizedPath = mainImage.path.replace(/^\/+/, '').trim();
+        datosEnvio.append('imagen_a_principal', normalizedPath);
+        console.log("Usando imagen de servidor como principal:", normalizedPath);
+      } else if (!mainImage) {
+        // No hay imagen principal
         datosEnvio.append('eliminar_imagen_principal', 'true');
         console.log("Eliminando imagen principal");
       }
   
-      newImages.forEach((img, index) => {
-        if (img.file) {
-          datosEnvio.append(`imagenes_nuevas[${index}]`, img.file);
+      // Añadir nuevas imágenes para el carrusel - con verificación extra
+      const processedNewImages = await Promise.all(newImages.map(async (img, index) => {
+        if (!img.file) return null;
+        
+        // Recomprimir si es necesario
+        if (img.file.size > 2 * 1024 * 1024) { // Si es mayor a 2MB
+          const recompressed = await compressImage(img.file, 600);
+          return { index, file: recompressed.file };
         }
-      });
+        
+        return { index, file: img.file };
+      }));
+      
+      // Filtrar los null y añadir al FormData
+      processedNewImages
+        .filter(item => item !== null)
+        .forEach(item => {
+          datosEnvio.append(`imagenes_nuevas[${item.index}]`, item.file);
+          console.log(`Añadiendo nueva imagen de carrusel: ${item.file.name} (${Math.round(item.file.size/1024)}KB)`);
+        });
   
+      // Añadir orden de imágenes
       const ordenImagenes = {};
       carouselImages.forEach((img, index) => {
         ordenImagenes[img.id] = index;
       });
       datosEnvio.append('orden_imagenes', JSON.stringify(ordenImagenes));
-  
-      imagesToRemove.forEach((path, index) => {
+      
+      // Añadir imágenes a eliminar - mejorado para evitar rutas vacías o duplicadas
+      const uniqueImagesToRemove = [...new Set(
+        imagesToRemove
+          .filter(path => path && path.trim() !== '') // Filtrar valores nulos o vacíos
+          .map(path => path.replace(/^\/+/, '').trim()) // Normalizar rutas
+      )];
+      
+      uniqueImagesToRemove.forEach((path, index) => {
         datosEnvio.append(`imagenes_eliminar[${index}]`, path);
+        console.log(`Eliminando imagen: ${path}`);
       });
   
+      // Laravel espera PUT para actualización
       datosEnvio.append('_method', 'PUT');
   
-      console.log("Enviando datos al servidor:");
+      // Debug de datos que se envían al servidor
+      console.log("Datos a enviar al servidor:");
       for (let [key, value] of datosEnvio.entries()) {
-        console.log(`${key}: ${value instanceof File ? `Archivo: ${value.name}` : value}`);
+        console.log(`${key}: ${value instanceof File ? `Archivo: ${value.name} (${Math.round(value.size/1024)}KB)` : value}`);
       }
   
+      // Incluir timeout para peticiones largas
       const response = await axios.post(`${API_URL}/productos/${id}`, datosEnvio, {
         headers: {
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
-        }
+        },
+        timeout: 60000 // 60 segundos de timeout para dar tiempo a la subida
       });
   
+      // Mostrar mensaje de éxito
       setToastInfo({
         mostrar: true,
         mensaje: `Producto "${formData.nombre}" actualizado con éxito`,
         tipo: 'success'
       });
   
+      // Redirigir después de un tiempo
       setTimeout(() => {
         navigate('/productos');
       }, 2500);
   
     } catch (error) {
       console.error('Error al actualizar producto:', error);
-  
-      let errorMsg = 'Error al actualizar el producto. Por favor, intenta de nuevo.';
+      
+      // Mostrar mensaje de error detallado
+      let errorMsg = 'Error al actualizar el producto. Por favor, intenta de nuevo con imágenes más pequeñas.';
+      
       if (error.response) {
+        console.log('Detalles del error:', error.response.data);
+        
         if (error.response.data.errors) {
           errorMsg = Object.values(error.response.data.errors).flat().join('. ');
-        } else if (error.response.data.message) {
-          errorMsg = error.response.data.message;
+        } else if (error.response.data.message || error.response.data.error) {
+          errorMsg = error.response.data.message || error.response.data.error;
         }
+      } else if (error.code === 'ECONNABORTED') {
+        errorMsg = 'La operación tomó demasiado tiempo. Intenta con imágenes más pequeñas.';
       }
+      
       setError(errorMsg);
       setToastInfo({
         mostrar: true,
-        mensaje: 'Error al actualizar el producto. Revisa los datos e intenta nuevamente.',
+        mensaje: 'Error al actualizar el producto. Prueba con imágenes más pequeñas.',
         tipo: 'error'
       });
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -569,7 +712,6 @@ useEffect(() => {
                   </select>
                 </div>
                 
-                {/* MODIFICADO: Cambio de input texto a select para tipo */}
                 <div className="form-group">
                   <label htmlFor="tipo">Tipo</label>
                   <select
@@ -627,6 +769,10 @@ useEffect(() => {
                         src={mainImage.url} 
                         alt="Imagen principal" 
                         className="main-image-preview"
+                        onError={(e) => {
+                          console.error(`Error cargando imagen principal: ${mainImage.url}`);
+                          e.target.src = '/assets/placeholder-product.png';
+                        }}
                       />
                       <div className="main-image-actions">
                         <button 

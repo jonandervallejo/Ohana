@@ -158,3 +158,11 @@ Route::prefix('tienda')->group(function() {
         });
     });
 });
+
+Route::get('/test-proxy', function () {
+    return [
+        'is_secure' => request()->isSecure(),
+        'scheme' => request()->getScheme(),
+        'url' => url('/test-proxy'),
+    ];
+});

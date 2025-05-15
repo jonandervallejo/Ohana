@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import axios from 'axios';
+import api from '../services/api'; // Instancia configurada de axios
+import { API_URL, BASE_URL } from '../config/config'; // Configuración centralizada
 import { obtenerProductos, obtenerProductosPorCategoria, eliminarProducto } from '../services/productoService';
 import TarjetaProducto from '../components/productos/TarjetaProducto';
 import ConfirmacionModal from '../components/ui/CofirmacionModal';
 import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 import './css/Productos.css';
 
-const API_URL = 'https://ohanatienda.ddns.net/api';
-const BASE_URL = 'https://ohanatienda.ddns.net';
+// Ya no necesitamos definir estas constantes aquí, vienen de config.js
+// const API_URL = 'https://ohanatienda.ddns.net/api';
+// const BASE_URL = 'https://ohanatienda.ddns.net';
 
 const ProductosPage = () => {
   const [productos, setProductos] = useState([]);
@@ -89,7 +91,8 @@ const ProductosPage = () => {
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const response = await axios.get(`${API_URL}/categorias`);
+        // Usar la instancia configurada de API en lugar de axios directamente
+        const response = await api.get('/categorias');
         setCategorias(response.data);
       } catch (error) {
         console.error('Error al cargar categorías:', error);
