@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\URL; // Añadido para generar URLs absolutas
+use Illuminate\Support\Facades\URL;
 
 class ProductoController extends Controller
 {
@@ -21,32 +21,94 @@ class ProductoController extends Controller
      * @return string|null
      */
     private function getAbsoluteUrl($path)
-{
-    if (!$path) return null;
-    
-    // Si ya es una URL completa
-    if (Str::startsWith($path, ['http://', 'https://'])) {
-        // Reemplazar cualquier URL local con el dominio de producción
-        if (Str::contains($path, ['localhost', '127.0.0.1'])) {
-            $path = preg_replace(
-                '#https?://(localhost|127\.0\.0\.1)(:\d+)?#', 
-                'https://ohanatienda.ddns.net', 
-                $path
-            );
+    {
+        if (!$path) return null;
+        
+        // Si ya es una URL completa
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            // Reemplazar cualquier URL local con el dominio de producción
+            if (Str::contains($path, ['localhost', '127.0.0.1'])) {
+                $path = preg_replace(
+                    '#https?://(localhost|127\.0\.0\.1)(:\d+)?#', 
+                    'https://ohanatienda.ddns.net', 
+                    $path
+                );
+            }
+            
+            // Convertir a HTTPS si es HTTP
+            return str_replace('http://', 'https://', $path);
         }
         
-        // Convertir a HTTPS si es HTTP
-        return str_replace('http://', 'https://', $path);
+        // Quitar slash inicial si existe
+        if (Str::startsWith($path, '/')) {
+            $path = substr($path, 1);
+        }
+        
+        // Generar URL absoluta con HTTPS
+        return 'https://ohanatienda.ddns.net/' . $path;
     }
-    
-    // Quitar slash inicial si existe
-    if (Str::startsWith($path, '/')) {
-        $path = substr($path, 1);
+
+    /**
+     * Asegura que todas las URLs de paginación usen HTTPS y mantiene la estructura
+     * 
+     * @param mixed $paginador Puede ser un paginador o una colección
+     * @return array
+     */
+    private function securePaginatedData($paginador)
+    {
+        // Si es una colección (no paginada), crear una estructura de paginación artificial
+        if (!method_exists($paginador, 'toArray') || !property_exists($paginador, 'total')) {
+            $data = $this->transformProductImages($paginador);
+            
+            return [
+                'current_page' => 1,
+                'data' => $data->toArray(),
+                'first_page_url' => $this->getAbsoluteUrl(request()->fullUrl()),
+                'from' => 1,
+                'last_page' => 1,
+                'last_page_url' => $this->getAbsoluteUrl(request()->fullUrl()),
+                'links' => [
+                    ['url' => null, 'label' => '&laquo; Previous', 'active' => false],
+                    ['url' => $this->getAbsoluteUrl(request()->fullUrl()), 'label' => '1', 'active' => true],
+                    ['url' => null, 'label' => 'Next &raquo;', 'active' => false],
+                ],
+                'next_page_url' => null,
+                'path' => $this->getAbsoluteUrl(request()->url()),
+                'per_page' => count($data),
+                'prev_page_url' => null,
+                'to' => count($data),
+                'total' => count($data)
+            ];
+        }
+        
+        // Si es un paginador, convertir a array y asegurar URLs
+        $paginacionArray = $paginador->toArray();
+        
+        // Asegurar URLs HTTPS en enlaces de paginación
+        $urlFields = ['first_page_url', 'last_page_url', 'next_page_url', 'prev_page_url', 'path'];
+        foreach ($urlFields as $field) {
+            if (isset($paginacionArray[$field]) && $paginacionArray[$field]) {
+                $paginacionArray[$field] = $this->getAbsoluteUrl($paginacionArray[$field]);
+            }
+        }
+        
+        // Asegurar URLs en los links
+        if (isset($paginacionArray['links']) && is_array($paginacionArray['links'])) {
+            foreach ($paginacionArray['links'] as &$link) {
+                if (isset($link['url']) && $link['url']) {
+                    $link['url'] = $this->getAbsoluteUrl($link['url']);
+                }
+            }
+        }
+        
+        // Transformar las imágenes de los productos en data
+        if (isset($paginacionArray['data'])) {
+            $productosData = collect($paginacionArray['data']);
+            $paginacionArray['data'] = $this->transformProductImages($productosData)->toArray();
+        }
+        
+        return $paginacionArray;
     }
-    
-    // Generar URL absoluta con HTTPS
-    return 'https://ohanatienda.ddns.net/' . $path;
-}
 
     /**
      * Transform product images to standardized format with absolute URLs
@@ -55,32 +117,47 @@ class ProductoController extends Controller
     {
         if (!$imageJson) return [];
         
-        $imagenes = json_decode($imageJson, true) ?: [];
-        $rutasObjetos = [];
-        
-        if (is_array($imagenes) && isset($imagenes[0]) && is_array($imagenes[0])) {
-            foreach ($imagenes as $index => $img) {
-                if (isset($img['ruta'])) {
-                    $rutaCompleta = $this->getAbsoluteUrl($img['ruta']);
-                    $rutasObjetos[] = [
-                        'id' => 'carousel-' . $index,
-                        'ruta' => $rutaCompleta,
-                        'orden' => $img['orden'] ?? $index
-                    ];
+        try {
+            // Intentar decodificar si es una cadena JSON
+            if (is_string($imageJson)) {
+                $imagenes = json_decode($imageJson, true) ?: [];
+            } else if (is_array($imageJson)) {
+                $imagenes = $imageJson;
+            } else {
+                return [];
+            }
+            
+            $rutasObjetos = [];
+            
+            if (is_array($imagenes) && !empty($imagenes) && isset($imagenes[0]) && is_array($imagenes[0])) {
+                foreach ($imagenes as $index => $img) {
+                    if (isset($img['ruta'])) {
+                        $rutaCompleta = $this->getAbsoluteUrl($img['ruta']);
+                        $rutasObjetos[] = [
+                            'id' => 'carousel-' . $index,
+                            'ruta' => $rutaCompleta,
+                            'orden' => $img['orden'] ?? $index
+                        ];
+                    }
+                }
+            } else if (is_array($imagenes)) {
+                foreach ($imagenes as $index => $ruta) {
+                    if (is_string($ruta)) {
+                        $rutaCompleta = $this->getAbsoluteUrl('uploads/productos/carrusel/' . $ruta);
+                        $rutasObjetos[] = [
+                            'id' => 'carousel-' . $index,
+                            'ruta' => $rutaCompleta,
+                            'orden' => $index
+                        ];
+                    }
                 }
             }
-        } else {
-            foreach ($imagenes as $index => $ruta) {
-                $rutaCompleta = $this->getAbsoluteUrl('uploads/productos/carrusel/' . $ruta);
-                $rutasObjetos[] = [
-                    'id' => 'carousel-' . $index,
-                    'ruta' => $rutaCompleta,
-                    'orden' => $index
-                ];
-            }
+            
+            return $rutasObjetos;
+        } catch (\Exception $e) {
+            Log::error('Error procesando imágenes: ' . $e->getMessage());
+            return [];
         }
-        
-        return $rutasObjetos;
     }
     
     /**
@@ -88,16 +165,21 @@ class ProductoController extends Controller
      */
     private function transformProductImages($productos)
     {
-        foreach ($productos as $producto) {
-            // Convertir la imagen principal a URL absoluta con HTTPS
-            if ($producto->imagen) {
-                $producto->imagen = $this->getAbsoluteUrl($producto->imagen);
+        try {
+            foreach ($productos as $producto) {
+                // Convertir la imagen principal a URL absoluta con HTTPS
+                if ($producto->imagen) {
+                    $producto->imagen = $this->getAbsoluteUrl($producto->imagen);
+                }
+                
+                // Convertir las imágenes del carrusel
+                $producto->imagenes = $this->transformImageData($producto->imagenes);
             }
-            
-            // Convertir las imágenes del carrusel
-            $producto->imagenes = $this->transformImageData($producto->imagenes);
+            return $productos;
+        } catch (\Exception $e) {
+            Log::error('Error transformando productos: ' . $e->getMessage());
+            return $productos;
         }
-        return $productos;
     }
     
     /**
@@ -130,14 +212,16 @@ class ProductoController extends Controller
                 Log::info('Filtrando hasta: ' . $request->fecha_fin);
             }
             
-            $limit = $request->input('per_page', 6);
-            $productos = $query->paginate($limit);
-            
-            // Log para debugging
-            Log::info('Consulta SQL productos: ' . $query->toSql());
-            Log::info('Parámetros recibidos: ' . json_encode($request->all()));
-            
-            return response()->json($this->transformProductImages($productos));
+            // Verificar si se solicitan todos los productos
+            if ($request->input('per_page') === 'all' || $request->input('per_page') === '-1') {
+                $productos = $query->get();
+                return response()->json($this->securePaginatedData($productos));
+            } else {
+                // Paginación normal
+                $limit = $request->input('per_page', 6);
+                $productos = $query->paginate($limit);
+                return response()->json($this->securePaginatedData($productos));
+            }
         } catch (\Exception $e) {
             Log::error('Error en ProductoController@index: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
@@ -147,14 +231,19 @@ class ProductoController extends Controller
 
     public function show($id)
     {
-        $producto = Producto::with(['categoria', 'stocks'])->find($id);
-        if (!$producto) return response()->json(['error' => 'Producto no encontrado'], 404);
-        
-        // Transformar el producto para asegurar URLs HTTPS
-        $productos = collect([$producto]);
-        $productos = $this->transformProductImages($productos);
-        
-        return response()->json($productos[0]);
+        try {
+            $producto = Producto::with(['categoria', 'stocks'])->find($id);
+            if (!$producto) return response()->json(['error' => 'Producto no encontrado'], 404);
+            
+            // Transformar el producto para asegurar URLs HTTPS
+            $productos = collect([$producto]);
+            $productos = $this->transformProductImages($productos);
+            
+            return response()->json($productos[0]);
+        } catch (\Exception $e) {
+            Log::error('Error en show: ' . $e->getMessage());
+            return response()->json(['error' => 'Error al obtener producto'], 500);
+        }
     }
 
     public function productosPorCategoria(Request $request, $id_categoria)
@@ -166,24 +255,24 @@ class ProductoController extends Controller
             // Aplicar filtros de fecha si están presentes
             if ($request->has('fecha_inicio') && !empty($request->fecha_inicio)) {
                 $query->whereDate('created_at', '>=', $request->fecha_inicio);
-                Log::info('Filtrando por categoría desde: ' . $request->fecha_inicio);
             }
             
             if ($request->has('fecha_fin') && !empty($request->fecha_fin)) {
                 $query->whereDate('created_at', '<=', $request->fecha_fin);
-                Log::info('Filtrando por categoría hasta: ' . $request->fecha_fin);
             }
             
-            $limit = $request->input('per_page', 6);
-            $productos = $query->paginate($limit);
-            
-            // Log para debugging
-            Log::info('Consulta SQL productos por categoría: ' . $query->toSql());
-            Log::info('Categoría: ' . $id_categoria);
-                
-            return response()->json($this->transformProductImages($productos));
+            // Verificar si se solicitan todos los productos
+            if ($request->input('per_page') === 'all' || $request->input('per_page') === '-1') {
+                $productos = $query->get();
+                return response()->json($this->securePaginatedData($productos));
+            } else {
+                // Paginación normal
+                $limit = $request->input('per_page', 6);
+                $productos = $query->paginate($limit);
+                return response()->json($this->securePaginatedData($productos));
+            }
         } catch (\Exception $e) {
-            Log::error('Error en ProductoController@productosPorCategoria: ' . $e->getMessage());
+            Log::error('Error en productosPorCategoria: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
             return response()->json(['error' => 'Error al obtener productos por categoría'], 500);
         }
@@ -225,7 +314,9 @@ class ProductoController extends Controller
             
             if ($request->hasFile('imagenes_files')) {
                 $uploadPath = 'uploads/productos/carrusel';
-                mkdir(public_path($uploadPath), 0777, true);
+                if (!file_exists(public_path($uploadPath))) {
+                    mkdir(public_path($uploadPath), 0777, true);
+                }
                 
                 // Obtener nombres predefinidos si existen
                 $nombresPredefinidos = [];
@@ -266,227 +357,227 @@ class ProductoController extends Controller
             return response()->json($productos[0], 201);
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("Error: " . $e->getMessage());
+            Log::error("Error en store: " . $e->getMessage());
             return response()->json(['error' => 'Error al crear el producto'], 500);
         }
     }
 
     public function update(Request $request, $id)
-{
-    $producto = Producto::find($id);
-    if (!$producto) return response()->json(['error' => 'Producto no encontrado'], 404);
-    
-    $validator = Validator::make($request->all(), [
-        'nombre' => 'sometimes|required|string|max:255',
-        'descripcion' => 'sometimes|required|string',
-        'precio' => 'sometimes|required|numeric|min:0',
-        'id_categoria' => 'sometimes|required|exists:categoria,id',
-        'imagen_principal' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-        'imagenes_nuevas.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-        'imagenes_eliminar' => 'nullable|array',
-        'imagen_a_principal' => 'nullable|string',
-        'tipo' => 'nullable|string|max:100',
-        'talla' => 'nullable|string|max:20',
-    ]);
-    
-    if ($validator->fails()) {
-        return response()->json(['errors' => $validator->errors()], 422);
-    }
-    
-    try {
-        DB::beginTransaction();
+    {
+        $producto = Producto::find($id);
+        if (!$producto) return response()->json(['error' => 'Producto no encontrado'], 404);
         
-        $productData = $request->except(['imagen_principal', 'imagenes_nuevas', 'imagenes_eliminar', 'imagenes_a_principal']);
+        $validator = Validator::make($request->all(), [
+            'nombre' => 'sometimes|required|string|max:255',
+            'descripcion' => 'sometimes|required|string',
+            'precio' => 'sometimes|required|numeric|min:0',
+            'id_categoria' => 'sometimes|required|exists:categoria,id',
+            'imagen_principal' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'imagenes_nuevas.*' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            'imagenes_eliminar' => 'nullable|array',
+            'imagen_a_principal' => 'nullable|string',
+            'tipo' => 'nullable|string|max:100',
+            'talla' => 'nullable|string|max:20',
+        ]);
         
-        // Cargar imágenes existentes
-        $imagenesCarrusel = json_decode($producto->imagenes, true) ?: [];
-        
-        // Convertir formato simple a objetos si es necesario
-        if (!empty($imagenesCarrusel) && !is_array($imagenesCarrusel[0])) {
-            $temp = [];
-            foreach ($imagenesCarrusel as $index => $ruta) {
-                $temp[] = [
-                    'id' => uniqid(),
-                    'ruta' => 'uploads/productos/carrusel/' . $ruta,
-                    'orden' => $index
-                ];
-            }
-            $imagenesCarrusel = $temp;
+        if ($validator->fails()) {
+            return response()->json(['errors' => $validator->errors()], 422);
         }
         
-        // Si hay nueva imagen principal por archivo
-        if ($request->hasFile('imagen_principal') && $request->file('imagen_principal')->isValid()) {
-            // Guardar la imagen anterior para intercambiarla
-            $imagenAnterior = $producto->imagen;
+        try {
+            DB::beginTransaction();
             
-            // Subir la nueva imagen principal
-            $productData['imagen'] = $this->handleFileUpload(
-                $request->file('imagen_principal'),
-                'principal',
-                'uploads/productos'
-            );
+            $productData = $request->except(['imagen_principal', 'imagenes_nuevas', 'imagenes_eliminar', 'imagenes_a_principal']);
             
-            // Mover la imagen anterior al carrusel (verificando que no esté duplicada)
-            if ($imagenAnterior && file_exists(public_path($imagenAnterior))) {
-                // Limpiar la URL para obtener la ruta relativa
-                $imagenAnterior = str_replace(URL::to('/'), '', $imagenAnterior);
-                $imagenAnterior = ltrim($imagenAnterior, '/');
-                
-                // Verificar si la imagen ya existe en el carrusel
-                $imagenYaExiste = false;
-                foreach ($imagenesCarrusel as $img) {
-                    $rutaRelativa = str_replace(URL::to('/'), '', $img['ruta']);
-                    $rutaRelativa = ltrim($rutaRelativa, '/');
-                    
-                    if ($rutaRelativa == $imagenAnterior) {
-                        $imagenYaExiste = true;
-                        break;
-                    }
-                }
-                
-                // Solo agregar si no existe
-                if (!$imagenYaExiste) {
-                    $imagenesCarrusel[] = [
+            // Cargar imágenes existentes
+            $imagenesCarrusel = json_decode($producto->imagenes, true) ?: [];
+            
+            // Convertir formato simple a objetos si es necesario
+            if (!empty($imagenesCarrusel) && !is_array($imagenesCarrusel[0])) {
+                $temp = [];
+                foreach ($imagenesCarrusel as $index => $ruta) {
+                    $temp[] = [
                         'id' => uniqid(),
-                        'ruta' => $imagenAnterior,
-                        'orden' => count($imagenesCarrusel)
+                        'ruta' => 'uploads/productos/carrusel/' . $ruta,
+                        'orden' => $index
                     ];
                 }
-            }
-        }
-        // Si se quiere establecer imagen del carrusel como principal
-        else if ($request->has('imagen_a_principal') && !empty($request->imagen_a_principal)) {
-            $rutaBuscar = $request->imagen_a_principal;
-            $imagenAnterior = $producto->imagen;
-            $imagenEncontradaIndex = null;
-            
-            // Normalizar la ruta de búsqueda eliminando la URL base si existe
-            $rutaBuscar = str_replace(URL::to('/'), '', $rutaBuscar);
-            $rutaBuscar = ltrim($rutaBuscar, '/');
-            
-            foreach ($imagenesCarrusel as $index => $img) {
-                $rutaCompleta = $img['ruta'];
-                // Normalizar la ruta completa
-                $rutaCompletaNormalizada = str_replace(URL::to('/'), '', $rutaCompleta);
-                $rutaCompletaNormalizada = ltrim($rutaCompletaNormalizada, '/');
-                
-                $rutaBasename = basename($rutaCompleta);
-                $rutaConUploads = "uploads/productos/carrusel/{$rutaBasename}";
-                
-                if ($rutaBuscar == $rutaCompletaNormalizada || $rutaBuscar == $rutaBasename || $rutaBuscar == $rutaConUploads) {
-                    // Establecer la imagen seleccionada como principal
-                    $productData['imagen'] = $rutaCompletaNormalizada; // Guardar ruta relativa en BD
-                    $imagenEncontradaIndex = $index;
-                    break;
-                }
+                $imagenesCarrusel = $temp;
             }
             
-            // Intercambiar: eliminar la imagen promovida del carrusel y agregar la anterior
-            if ($imagenEncontradaIndex !== null) {
-                // Eliminar la imagen del carrusel
-                array_splice($imagenesCarrusel, $imagenEncontradaIndex, 1);
+            // Si hay nueva imagen principal por archivo
+            if ($request->hasFile('imagen_principal') && $request->file('imagen_principal')->isValid()) {
+                // Guardar la imagen anterior para intercambiarla
+                $imagenAnterior = $producto->imagen;
                 
-                // Normalizar la ruta anterior
-                $imagenAnteriorNormalizada = str_replace(URL::to('/'), '', $imagenAnterior);
-                $imagenAnteriorNormalizada = ltrim($imagenAnteriorNormalizada, '/');
+                // Subir la nueva imagen principal
+                $productData['imagen'] = $this->handleFileUpload(
+                    $request->file('imagen_principal'),
+                    'principal',
+                    'uploads/productos'
+                );
                 
-                // Agregar la imagen anterior al carrusel si existe y no está ya en el carrusel
-                if ($imagenAnteriorNormalizada && file_exists(public_path($imagenAnteriorNormalizada))) {
+                // Mover la imagen anterior al carrusel (verificando que no esté duplicada)
+                if ($imagenAnterior && file_exists(public_path($imagenAnterior))) {
+                    // Limpiar la URL para obtener la ruta relativa
+                    $imagenAnterior = str_replace(URL::to('/'), '', $imagenAnterior);
+                    $imagenAnterior = ltrim($imagenAnterior, '/');
+                    
+                    // Verificar si la imagen ya existe en el carrusel
                     $imagenYaExiste = false;
                     foreach ($imagenesCarrusel as $img) {
                         $rutaRelativa = str_replace(URL::to('/'), '', $img['ruta']);
                         $rutaRelativa = ltrim($rutaRelativa, '/');
                         
-                        if ($rutaRelativa == $imagenAnteriorNormalizada) {
+                        if ($rutaRelativa == $imagenAnterior) {
                             $imagenYaExiste = true;
                             break;
                         }
                     }
                     
+                    // Solo agregar si no existe
                     if (!$imagenYaExiste) {
                         $imagenesCarrusel[] = [
                             'id' => uniqid(),
-                            'ruta' => $imagenAnteriorNormalizada,
+                            'ruta' => $imagenAnterior,
                             'orden' => count($imagenesCarrusel)
                         ];
                     }
                 }
             }
-        }
-
-        // Eliminar imágenes marcadas para borrar del array (pero no físicamente)
-        if ($request->has('imagenes_eliminar') && is_array($request->imagenes_eliminar)) {
-            $imagenesAMantener = [];
-            
-            foreach ($imagenesCarrusel as $imagen) {
-                $rutaCompleta = $imagen['ruta'];
-                // Normalizar la ruta
-                $rutaCompletaNormalizada = str_replace(URL::to('/'), '', $rutaCompleta);
-                $rutaCompletaNormalizada = ltrim($rutaCompletaNormalizada, '/');
+            // Si se quiere establecer imagen del carrusel como principal
+            else if ($request->has('imagen_a_principal') && !empty($request->imagen_a_principal)) {
+                $rutaBuscar = $request->imagen_a_principal;
+                $imagenAnterior = $producto->imagen;
+                $imagenEncontradaIndex = null;
                 
-                $rutaBasename = basename($rutaCompleta);
-                $rutaConUploads = "uploads/productos/carrusel/{$rutaBasename}";
+                // Normalizar la ruta de búsqueda eliminando la URL base si existe
+                $rutaBuscar = str_replace(URL::to('/'), '', $rutaBuscar);
+                $rutaBuscar = ltrim($rutaBuscar, '/');
                 
-                $debeEliminar = false;
-                foreach ($request->imagenes_eliminar as $rutaEliminar) {
-                    // Normalizar la ruta a eliminar
-                    $rutaEliminarNormalizada = str_replace(URL::to('/'), '', $rutaEliminar);
-                    $rutaEliminarNormalizada = ltrim($rutaEliminarNormalizada, '/');
+                foreach ($imagenesCarrusel as $index => $img) {
+                    $rutaCompleta = $img['ruta'];
+                    // Normalizar la ruta completa
+                    $rutaCompletaNormalizada = str_replace(URL::to('/'), '', $rutaCompleta);
+                    $rutaCompletaNormalizada = ltrim($rutaCompletaNormalizada, '/');
                     
-                    if ($rutaEliminarNormalizada == $rutaCompletaNormalizada || 
-                        $rutaEliminarNormalizada == $rutaBasename || 
-                        $rutaEliminarNormalizada == $rutaConUploads) {
-                        $debeEliminar = true;
-                        // No se borran las imágenes físicamente
+                    $rutaBasename = basename($rutaCompleta);
+                    $rutaConUploads = "uploads/productos/carrusel/{$rutaBasename}";
+                    
+                    if ($rutaBuscar == $rutaCompletaNormalizada || $rutaBuscar == $rutaBasename || $rutaBuscar == $rutaConUploads) {
+                        // Establecer la imagen seleccionada como principal
+                        $productData['imagen'] = $rutaCompletaNormalizada; // Guardar ruta relativa en BD
+                        $imagenEncontradaIndex = $index;
                         break;
                     }
                 }
                 
-                if (!$debeEliminar) {
-                    $imagenesAMantener[] = $imagen;
-                }
-            }
-            
-            $imagenesCarrusel = $imagenesAMantener;
-        }
-        
-        // Procesar nuevas imágenes
-        if ($request->hasFile('imagenes_nuevas')) {
-            $ultimoOrden = count($imagenesCarrusel) > 0 ? max(array_column($imagenesCarrusel, 'orden')) + 1 : 0;
-            
-            foreach ($request->file('imagenes_nuevas') as $file) {
-                if ($file->isValid()) {
-                    $fileName = $this->handleFileUpload($file, 'carrusel', 'uploads/productos/carrusel');
+                // Intercambiar: eliminar la imagen promovida del carrusel y agregar la anterior
+                if ($imagenEncontradaIndex !== null) {
+                    // Eliminar la imagen del carrusel
+                    array_splice($imagenesCarrusel, $imagenEncontradaIndex, 1);
                     
-                    $imagenesCarrusel[] = [
-                        'id' => uniqid(),
-                        'ruta' => $fileName, // Ruta relativa
-                        'orden' => $ultimoOrden++
-                    ];
+                    // Normalizar la ruta anterior
+                    $imagenAnteriorNormalizada = str_replace(URL::to('/'), '', $imagenAnterior);
+                    $imagenAnteriorNormalizada = ltrim($imagenAnteriorNormalizada, '/');
+                    
+                    // Agregar la imagen anterior al carrusel si existe y no está ya en el carrusel
+                    if ($imagenAnteriorNormalizada && file_exists(public_path($imagenAnteriorNormalizada))) {
+                        $imagenYaExiste = false;
+                        foreach ($imagenesCarrusel as $img) {
+                            $rutaRelativa = str_replace(URL::to('/'), '', $img['ruta']);
+                            $rutaRelativa = ltrim($rutaRelativa, '/');
+                            
+                            if ($rutaRelativa == $imagenAnteriorNormalizada) {
+                                $imagenYaExiste = true;
+                                break;
+                            }
+                        }
+                        
+                        if (!$imagenYaExiste) {
+                            $imagenesCarrusel[] = [
+                                'id' => uniqid(),
+                                'ruta' => $imagenAnteriorNormalizada,
+                                'orden' => count($imagenesCarrusel)
+                            ];
+                        }
+                    }
                 }
             }
+
+            // Eliminar imágenes marcadas para borrar del array (pero no físicamente)
+            if ($request->has('imagenes_eliminar') && is_array($request->imagenes_eliminar)) {
+                $imagenesAMantener = [];
+                
+                foreach ($imagenesCarrusel as $imagen) {
+                    $rutaCompleta = $imagen['ruta'];
+                    // Normalizar la ruta
+                    $rutaCompletaNormalizada = str_replace(URL::to('/'), '', $rutaCompleta);
+                    $rutaCompletaNormalizada = ltrim($rutaCompletaNormalizada, '/');
+                    
+                    $rutaBasename = basename($rutaCompleta);
+                    $rutaConUploads = "uploads/productos/carrusel/{$rutaBasename}";
+                    
+                    $debeEliminar = false;
+                    foreach ($request->imagenes_eliminar as $rutaEliminar) {
+                        // Normalizar la ruta a eliminar
+                        $rutaEliminarNormalizada = str_replace(URL::to('/'), '', $rutaEliminar);
+                        $rutaEliminarNormalizada = ltrim($rutaEliminarNormalizada, '/');
+                        
+                        if ($rutaEliminarNormalizada == $rutaCompletaNormalizada || 
+                            $rutaEliminarNormalizada == $rutaBasename || 
+                            $rutaEliminarNormalizada == $rutaConUploads) {
+                            $debeEliminar = true;
+                            // No se borran las imágenes físicamente
+                            break;
+                        }
+                    }
+                    
+                    if (!$debeEliminar) {
+                        $imagenesAMantener[] = $imagen;
+                    }
+                }
+                
+                $imagenesCarrusel = $imagenesAMantener;
+            }
+            
+            // Procesar nuevas imágenes
+            if ($request->hasFile('imagenes_nuevas')) {
+                $ultimoOrden = count($imagenesCarrusel) > 0 ? max(array_column($imagenesCarrusel, 'orden')) + 1 : 0;
+                
+                foreach ($request->file('imagenes_nuevas') as $file) {
+                    if ($file->isValid()) {
+                        $fileName = $this->handleFileUpload($file, 'carrusel', 'uploads/productos/carrusel');
+                        
+                        $imagenesCarrusel[] = [
+                            'id' => uniqid(),
+                            'ruta' => $fileName, // Ruta relativa
+                            'orden' => $ultimoOrden++
+                        ];
+                    }
+                }
+            }
+            
+            // Guardar cambios
+            $producto->update($productData);
+            $producto->imagenes = json_encode($imagenesCarrusel);
+            $producto->save();
+            
+            DB::commit();
+            
+            // Cargar las relaciones y transformar el producto para HTTPS
+            $producto->load(['categoria', 'stocks']);
+            $productos = collect([$producto]);
+            $productos = $this->transformProductImages($productos);
+            
+            return response()->json(['success' => 'Producto actualizado correctamente', 'producto' => $productos[0]]);
+        } catch (\Exception $e) {
+            DB::rollback();
+            Log::error('Error en update: ' . $e->getMessage());
+            Log::error($e->getTraceAsString());
+            return response()->json(['error' => 'Error al actualizar el producto'], 500);
         }
-        
-        // Guardar cambios
-        $producto->update($productData);
-        $producto->imagenes = json_encode($imagenesCarrusel);
-        $producto->save();
-        
-        DB::commit();
-        
-        // Cargar las relaciones y transformar el producto para HTTPS
-        $producto->load(['categoria', 'stocks']);
-        $productos = collect([$producto]);
-        $productos = $this->transformProductImages($productos);
-        
-        return response()->json(['success' => 'Producto actualizado correctamente', 'producto' => $productos[0]]);
-    } catch (\Exception $e) {
-        DB::rollback();
-        Log::error('Error en update: ' . $e->getMessage());
-        Log::error($e->getTraceAsString());
-        return response()->json(['error' => 'Error al actualizar el producto'], 500);
     }
-}
 
     public function destroy($id)
     {
@@ -665,13 +756,16 @@ class ProductoController extends Controller
                 $query->where('id_categoria', $request->categoria);
             }
             
-            // Configurar la paginación
-            $perPage = $request->input('per_page', 6);
-            $productos = $query->paginate($perPage);
-            
-            // Transformar las imágenes para HTTPS y devolver la respuesta
-            return response()->json($this->transformProductImages($productos));
-            
+            // Verificar si se solicitan todos los productos
+            if ($request->input('per_page') === 'all' || $request->input('per_page') === '-1') {
+                $productos = $query->get();
+                return response()->json($this->securePaginatedData($productos));
+            } else {
+                // Paginación normal
+                $perPage = $request->input('per_page', 6);
+                $productos = $query->paginate($perPage);
+                return response()->json($this->securePaginatedData($productos));
+            }
         } catch (\Exception $e) {
             Log::error('Error en getProductosPorGenero: ' . $e->getMessage());
             Log::error($e->getTraceAsString());
