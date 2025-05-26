@@ -126,7 +126,7 @@ class VentaController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'id_usuario' => 'required|exists:users,id',
+            'id_usuario' => 'required|exists:usuario,id', // Cambiado de users a usuario
             'productos' => 'required|array',
             'productos.*.id_producto' => 'required|exists:producto,id',
             'productos.*.talla' => 'required|string',
@@ -143,10 +143,10 @@ class VentaController extends Controller
                               ->where('talla', $producto['talla'])
                               ->where('color', $producto['color'])
                               ->first();
-                
+
                 if (!$stock || $stock->stock < $producto['cantidad']) {
                     return response()->json([
-                        'error' => "Stock insuficiente para el producto ID {$producto['id_producto']}"
+                        'error' => "Stock insuficiente para el producto ID {$producto['id_producto']}  {$producto['cantidad']}"
                     ], 400);
                 }
             }
