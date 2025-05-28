@@ -541,4 +541,74 @@ class VentaController extends Controller
             return response()->json(['error' => 'Error al eliminar la venta: ' . $e->getMessage()], 500);
         }
     }
+
+    public function getVentasByUsuarioId($id_usuario)
+{
+    try {
+        // Buscamos todas las compras del usuario
+        $compras = Compra::where('id_usuario', $id_usuario)
+                    ->orderBy('created_at', 'desc')
+                    ->get();
+        
+        if ($compras->isEmpty()) {
+            return response()->json(['message' => 'No se encontraron ventas para este usuario'], 404);
+        }
+        
+        $ventasFormateadas = [];
+        
+        foreach ($compras as $compra) {
+            // Buscar tickets asociados a esta compra
+            $tickets = Ticket::where('id_compra', $compra->id)
+                        ->with(['stock.producto'])
+                        ->get();
+            
+            if ($tickets->isEmpty()) {
+                continue; // Saltamos compras sin tickets
+            }
+            
+            // Formatear fecha
+            $fechaFormateada = $compra->created_at ? 
+                              $compra->created_at->format('Y-m-d H:i:s') : 
+                              'Sin fecha';
+            
+            // Formatear productos
+            $productos = [];
+            $precioTotal = 0;
+            
+            foreach ($tickets as $ticket) {
+                if (!$ticket->stock || !$ticket->stock->producto) continue;
+                
+                $producto = $ticket->stock->producto;
+                $productos[] = [
+                    'id' => $producto->id,
+                    'nombre' => $producto->nombre,
+                    'talla' => $ticket->stock->talla,
+                    'color' => $ticket->stock->color,
+                    'cantidad' => $ticket->cantidad,
+                    'precio_unitario' => $ticket->precio_unitario,
+                    'subtotal' => $ticket->precio_total
+                ];
+                
+                $precioTotal += $ticket->precio_total;
+            }
+            
+            // Solo añadimos ventas que tienen productos
+            if (!empty($productos)) {
+                $ventasFormateadas[] = [
+                    'id' => $compra->id,
+                    'fecha' => $fechaFormateada,
+                    'estado' => $compra->estado ?? 'pendiente',
+                    'productos' => $productos,
+                    'precio_total' => $precioTotal,
+                ];
+            }
+        }
+        
+        return response()->json($ventasFormateadas);
+        
+    } catch (\Exception $e) {
+        Log::error('Error al obtener ventas del usuario: ' . $e->getMessage());
+        return response()->json(['error' => 'Error al obtener las ventas: ' . $e->getMessage()], 500);
+    }
+}
 }

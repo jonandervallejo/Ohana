@@ -3,6 +3,7 @@ import './css/Ventas.css';
 import Toast from '../components/ui/Toast';
 import ConfirmacionModal from '../components/ui/CofirmacionModal';
 import api from '../services/estadisticaService';
+import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const Ventas = () => {
   const [ventas, setVentas] = useState([]);
@@ -410,64 +411,95 @@ const Ventas = () => {
             ))}
           </div>
 
+          {/* Nueva paginación en estilo Inventario */}
           {totalPaginas > 1 && (
-            <div className="paginacion">
-              <button 
-                onClick={() => cambiarPagina(paginaActual - 1)} 
-                disabled={paginaActual === 1}
-                className="btn-pagina"
-                aria-label="Página anterior"
-              >
-                <i className="fas fa-chevron-left"></i>
-              </button>
+            <div className="pagination-container">
+              <div className="pagination">
+                <button 
+                  className="pagination-button"
+                  onClick={() => cambiarPagina(paginaActual - 1)}
+                  disabled={paginaActual === 1}
+                >
+                  <FaChevronLeft />
+                </button>
+                
+                {(() => {
+                  // Determinamos el rango de páginas a mostrar (máximo 5)
+                  let startPage = Math.max(1, Math.min(paginaActual - 2, totalPaginas - 4));
+                  let endPage = Math.min(startPage + 4, totalPaginas);
+                  
+                  // Si no tenemos suficientes páginas al final, ajustamos el inicio
+                  if (endPage - startPage < 4) {
+                    startPage = Math.max(1, endPage - 4);
+                  }
+                  
+                  // Crear un array con los números de página a mostrar
+                  const pages = [];
+                  
+                  // Primera página y elipsis si no es visible en el rango actual
+                  if (startPage > 1) {
+                    pages.push(
+                      <button
+                        key="first"
+                        className="pagination-button"
+                        onClick={() => cambiarPagina(1)}
+                      >
+                        1
+                      </button>
+                    );
+                    
+                    if (startPage > 2) {
+                      pages.push(<span key="ellipsis-start" className="pagination-ellipsis">...</span>);
+                    }
+                  }
+                  
+                  // Botones del rango principal
+                  for (let i = startPage; i <= endPage; i++) {
+                    pages.push(
+                      <button
+                        key={i}
+                        className={`pagination-button ${paginaActual === i ? 'active' : ''}`}
+                        onClick={() => cambiarPagina(i)}
+                      >
+                        {i}
+                      </button>
+                    );
+                  }
+                  
+                  // Última página y elipsis si no es visible en el rango actual
+                  if (endPage < totalPaginas) {
+                    if (endPage < totalPaginas - 1) {
+                      pages.push(<span key="ellipsis-end" className="pagination-ellipsis">...</span>);
+                    }
+                    
+                    pages.push(
+                      <button
+                        key="last"
+                        className="pagination-button"
+                        onClick={() => cambiarPagina(totalPaginas)}
+                      >
+                        {totalPaginas}
+                      </button>
+                    );
+                  }
+                  
+                  return pages;
+                })()}
+                
+                <button 
+                  className="pagination-button"
+                  onClick={() => cambiarPagina(paginaActual + 1)}
+                  disabled={paginaActual === totalPaginas}
+                >
+                  <FaChevronRight />
+                </button>
+              </div>
               
-              {[...Array(totalPaginas).keys()].map(num => {
-                const pageNum = num + 1;
-                
-                if (
-                  pageNum === 1 || 
-                  pageNum === totalPaginas ||
-                  (pageNum >= paginaActual - 1 && pageNum <= paginaActual + 1) ||
-                  (paginaActual <= 3 && pageNum <= 5) ||
-                  (paginaActual >= totalPaginas - 2 && pageNum >= totalPaginas - 4)
-                ) {
-                  return (
-                    <button 
-                      key={pageNum} 
-                      onClick={() => cambiarPagina(pageNum)}
-                      className={`btn-pagina ${paginaActual === pageNum ? 'active' : ''}`}
-                      aria-label={`Página ${pageNum}`}
-                      aria-current={paginaActual === pageNum ? "page" : undefined}
-                    >
-                      {pageNum}
-                    </button>
-                  );
-                }
-                
-                if (
-                  (pageNum === 2 && paginaActual > 4) ||
-                  (pageNum === totalPaginas - 1 && paginaActual < totalPaginas - 3)
-                ) {
-                  return <span key={`ellipsis-${pageNum}`} className="pagina-ellipsis">...</span>;
-                }
-                
-                return null;
-              })}
-              
-              <button 
-                onClick={() => cambiarPagina(paginaActual + 1)} 
-                disabled={paginaActual === totalPaginas}
-                className="btn-pagina"
-                aria-label="Página siguiente"
-              >
-                <i className="fas fa-chevron-right"></i>
-              </button>
+              <div className="pagination-info">
+                Mostrando {indicePrimeraVenta + 1} - {Math.min(indiceUltimaVenta, ventasFiltradas.length)} de {ventasFiltradas.length} ventas
+              </div>
             </div>
           )}
-          
-          <div className="paginacion-info">
-            Mostrando {indicePrimeraVenta + 1} - {Math.min(indiceUltimaVenta, ventasFiltradas.length)} de {ventasFiltradas.length} ventas
-          </div>
         </>
       )}
 

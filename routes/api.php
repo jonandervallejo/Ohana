@@ -98,6 +98,7 @@ Route::delete('/stock/{id}', [StockController::class, 'eliminarInventario']);
 // Rutas de ventas
 Route::get('/ventas', [VentaController::class, 'index']);
 Route::post('/ventas', [VentaController::class, 'store']);
+Route::get('/ventas/usuario/{id_usuario}', [VentaController::class, 'getVentasByUsuarioId']);
 Route::get('/ventas/{id}', [VentaController::class, 'show']);
 Route::put('/ventas/{id}/completar', [VentaController::class, 'completar']);
 Route::put('/ventas/{id}/cancelar', [VentaController::class, 'cancelar']);
