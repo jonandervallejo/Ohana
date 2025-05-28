@@ -1,31 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import api from '../services/api'; // Instancia configurada de axios
-import { API_URL, BASE_URL } from '../config/config'; // Configuración centralizada
-import { obtenerProductos, obtenerProductosPorCategoria, eliminarProducto } from '../services/productoService';
+import api from '../services/api';
+import { API_URL, BASE_URL } from '../config/config';
+import { obtenerTodosLosProductos, obtenerProductosPorCategoria, eliminarProducto } from '../services/productoService';
 import TarjetaProducto from '../components/productos/TarjetaProducto';
 import ConfirmacionModal from '../components/ui/CofirmacionModal';
-import { FaChevronLeft, FaChevronRight } from 'react-icons/fa';
+import { FaChevronLeft, FaChevronRight, FaSearch } from 'react-icons/fa';
 import './css/Productos.css';
 
-// Ya no necesitamos definir estas constantes aquí, vienen de config.js
-// const API_URL = 'https://ohanatienda.ddns.net/api';
-// const BASE_URL = 'https://ohanatienda.ddns.net';
-
 const ProductosPage = () => {
-  const [productos, setProductos] = useState([]);
-  const [productosFiltrados, setProductosFiltrados] = useState([]);
+  const [productos, setProductos] = useState([]);  // Todos los productos
+  const [productosFiltrados, setProductosFiltrados] = useState([]);  // Productos filtrados
   const [categorias, setCategorias] = useState([]);
-  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState(null);
+  const [categoriaSeleccionada, setCategoriaSeleccionada] = useState('');
   const [busqueda, setBusqueda] = useState('');
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState(null);
-  const [mostrarCategorias, setMostrarCategorias] = useState(false);
   const [paginaActual, setPaginaActual] = useState(0);
-  const [totalPaginas, setTotalPaginas] = useState(1);
-  const [totalProductos, setTotalProductos] = useState(0);
+  const [itemsPorPagina] = useState(6);
   const [procesandoEliminacion, setProcesandoEliminacion] = useState(false);
-  const [necesitaRecargar, setNecesitaRecargar] = useState(false);
+  const [intentosDeRecarga, setIntentosDeRecarga] = useState(0);
+  const [cargandoCategoria, setCargandoCategoria] = useState(false);
   
   // Estados para el filtro de fecha
   const [fechaInicio, setFechaInicio] = useState('');
@@ -37,129 +32,181 @@ const ProductosPage = () => {
     producto: null
   });
 
-  const cargarProductos = async () => {
-    try {
-      setCargando(true);
-      let params = {
-        page: paginaActual + 1,
-        per_page: 6
-      };
-      
-      // Agregar filtros de fecha si están presentes
-      if (fechaInicio) {
-        params.fecha_inicio = fechaInicio;
-      }
-      
-      if (fechaFin) {
-        params.fecha_fin = fechaFin;
-      }
-      
-      let response;
-      if (categoriaSeleccionada) {
-        response = await obtenerProductosPorCategoria(categoriaSeleccionada, params);
-      } else {
-        response = await obtenerProductos(params);
-      }
-      
-      if (response && response.data) {
-        setProductos(response.data);
-        setTotalPaginas(response.last_page);
-        
-        // Actualizar el total de productos usando el campo 'total' de la respuesta
-        if (response.total) {
-          setTotalProductos(response.total);
-        }
-      } else {
-        setProductos([]);
-        setTotalPaginas(1);
-      }
-      setError(null);
-    } catch (err) {
-      setError('Error al cargar los productos');
-      console.error('Error completo:', err);
-    } finally {
-      setCargando(false);
-      setNecesitaRecargar(false);
-    }
-  };
-
-  // Efecto para cargar productos cuando cambian los filtros o cuando se necesita recargar
+  // Cargar categorías al inicio
   useEffect(() => {
-    cargarProductos();
-  }, [categoriaSeleccionada, paginaActual, necesitaRecargar]);
-
-  useEffect(() => {
-    const fetchCategorias = async () => {
+    const cargarCategorias = async () => {
       try {
-        // Usar la instancia configurada de API en lugar de axios directamente
-        const response = await api.get('/categorias');
-        setCategorias(response.data);
-      } catch (error) {
-        console.error('Error al cargar categorías:', error);
-        setError('No se pudieron cargar las categorías. Por favor, intenta de nuevo.');
+        const categoriasResponse = await api.get('/categorias');
+        setCategorias(categoriasResponse.data);
+      } catch (err) {
+        console.error('Error al cargar categorías:', err);
+        setError('Error al cargar las categorías. Por favor, intenta de nuevo.');
+      }
+    };
+    
+    cargarCategorias();
+  }, []);
+
+  // Cargar productos (todos o por categoría)
+  useEffect(() => {
+    const cargarProductos = async () => {
+      try {
+        setCargando(true);
+        setError(null);
+        
+        let productosData = [];
+        
+        // Si hay categoría seleccionada, cargar productos de esa categoría
+        if (categoriaSeleccionada) {
+          setCargandoCategoria(true);
+          console.log(`Cargando productos de la categoría ID: ${categoriaSeleccionada}`);
+          productosData = await obtenerProductosPorCategoria(categoriaSeleccionada);
+          setCargandoCategoria(false);
+        } else {
+          // Si no hay categoría seleccionada, cargar todos los productos
+          console.log("Cargando todos los productos...");
+          productosData = await obtenerTodosLosProductos();
+        }
+        
+        if (productosData.length === 0 && intentosDeRecarga < 2) {
+          console.log(`No se obtuvieron productos, reintentando (${intentosDeRecarga + 1}/2)...`);
+          setIntentosDeRecarga(prev => prev + 1);
+          return;
+        }
+        
+        console.log(`Cargados ${productosData.length} productos`);
+        setProductos(productosData);
+        
+        // Aplicar otros filtros al conjunto de productos cargados
+        aplicarFiltros(productosData);
+        
+        setCargando(false);
+      } catch (err) {
+        console.error('Error al cargar datos:', err);
+        setError('Error al cargar los datos. Por favor, intenta de nuevo.');
+        setCargando(false);
+        
+        if (intentosDeRecarga < 2) {
+          console.log(`Error al cargar datos, reintentando (${intentosDeRecarga + 1}/2)...`);
+          setIntentosDeRecarga(prev => prev + 1);
+        }
       }
     };
 
-    fetchCategorias();
-  }, []);
+    cargarProductos();
+  }, [categoriaSeleccionada, intentosDeRecarga]);
 
-  useEffect(() => {
-    let resultados = productos;
-
-    if (busqueda.trim() !== '') {
-      resultados = resultados.filter(producto => 
-        producto.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        producto.descripcion.toLowerCase().includes(busqueda.toLowerCase())
-      );
+  // Función para aplicar filtros (búsqueda y fecha)
+  const aplicarFiltros = (productosAFiltrar) => {
+    if (!productosAFiltrar || productosAFiltrar.length === 0) {
+      setProductosFiltrados([]);
+      return;
     }
-
+    
+    console.log(`Aplicando filtros adicionales a ${productosAFiltrar.length} productos...`);
+    
+    // Empezar con todos los productos que ya están filtrados por categoría
+    let resultados = [...productosAFiltrar];
+    
+    // Aplicar filtro de búsqueda
+    if (busqueda.trim() !== '') {
+      const terminoBusqueda = busqueda.toLowerCase().trim();
+      resultados = resultados.filter(producto =>
+        (producto.nombre?.toLowerCase() || '').includes(terminoBusqueda) ||
+        (producto.descripcion?.toLowerCase() || '').includes(terminoBusqueda)
+      );
+      console.log(`Productos después de filtrar por búsqueda "${busqueda}": ${resultados.length}`);
+    }
+    
+    // Aplicar filtros de fecha
+    if (fechaInicio || fechaFin) {
+      resultados = resultados.filter(producto => {
+        if (!producto.created_at) return false;
+        
+        const fechaProducto = new Date(producto.created_at);
+        let cumpleFechaInicio = true;
+        let cumpleFechaFin = true;
+        
+        if (fechaInicio) {
+          const fechaInicioObj = new Date(fechaInicio);
+          cumpleFechaInicio = fechaProducto >= fechaInicioObj;
+        }
+        
+        if (fechaFin) {
+          const fechaFinObj = new Date(fechaFin);
+          // Ajustar para incluir todo el día final
+          fechaFinObj.setHours(23, 59, 59, 999);
+          cumpleFechaFin = fechaProducto <= fechaFinObj;
+        }
+        
+        return cumpleFechaInicio && cumpleFechaFin;
+      });
+      console.log(`Productos después de filtrar por fechas: ${resultados.length}`);
+    }
+    
+    // Actualizar productos filtrados con los resultados
     setProductosFiltrados(resultados);
-  }, [busqueda, productos]);
+    
+    // Resetear página si estamos en una página que ya no existe con los nuevos filtros
+    const nuevasPaginas = Math.ceil(resultados.length / itemsPorPagina);
+    if (paginaActual > 0 && paginaActual >= nuevasPaginas) {
+      console.log(`Reseteando página actual de ${paginaActual} a 0 porque no hay suficientes resultados`);
+      setPaginaActual(0);
+    }
+  };
 
-  const filtrarPorCategoria = (idCategoria) => {
-    setCategoriaSeleccionada(idCategoria);
-    setPaginaActual(0);
-    setMostrarCategorias(false);
+  // Replicar filtros cuando cambian búsqueda o fechas
+  useEffect(() => {
+    aplicarFiltros(productos);
+  }, [busqueda, fechaInicio, fechaFin, productos]);
+
+  // Manejador para cambiar la categoría
+  const handleCategoriaChange = (e) => {
+    const valor = e.target.value;
+    console.log(`Cambiando categoría a: ${valor}`);
+    setCategoriaSeleccionada(valor);
+    setPaginaActual(0); // Resetear a la primera página
+  };
+
+  // Manejador para la búsqueda
+  const handleBusqueda = (valor) => {
+    console.log(`Cambiando búsqueda a: ${valor}`);
+    setBusqueda(valor);
+    setPaginaActual(0); // Resetear a la primera página
   };
 
   const limpiarFiltros = () => {
-    setCategoriaSeleccionada(null);
+    console.log("Limpiando todos los filtros");
+    setCategoriaSeleccionada('');
     setBusqueda('');
     setFechaInicio('');
     setFechaFin('');
     setPaginaActual(0);
-    setMostrarCategorias(false);
     setMostrarFiltroFecha(false);
-    setNecesitaRecargar(true);
-  };
-  
-  const toggleCategorias = () => {
-    setMostrarCategorias(!mostrarCategorias);
-    if (mostrarFiltroFecha) setMostrarFiltroFecha(false);
   };
   
   const toggleFiltroFecha = () => {
     setMostrarFiltroFecha(!mostrarFiltroFecha);
-    if (mostrarCategorias) setMostrarCategorias(false);
   };
   
   const aplicarFiltroFecha = () => {
+    console.log(`Aplicando filtro fecha: ${fechaInicio} - ${fechaFin}`);
     setPaginaActual(0);
     setMostrarFiltroFecha(false);
-    setNecesitaRecargar(true);
   };
   
   const limpiarFiltroFecha = () => {
+    console.log("Limpiando filtro de fecha");
     setFechaInicio('');
     setFechaFin('');
     setPaginaActual(0);
-    setNecesitaRecargar(true);
   };
   
   const handleProductoActualizado = (productoActualizado) => {
-    setProductos(productos.map(p => 
-      p.id === productoActualizado.id ? productoActualizado : p
-    ));
+    // Actualizar tanto en la lista completa como en los filtrados
+    setProductos(prevProductos => {
+      return prevProductos.map(p => p.id === productoActualizado.id ? productoActualizado : p);
+    });
   };
 
   const confirmarEliminacion = (producto) => {
@@ -190,7 +237,11 @@ const ProductosPage = () => {
       });
       
       await eliminarProducto(producto.id);
-      setNecesitaRecargar(true);
+      
+      // Eliminar el producto de la lista local
+      setProductos(prevProductos => {
+        return prevProductos.filter(p => p.id !== producto.id);
+      });
       
     } catch (error) {
       console.error("Error al eliminar el producto:", error);
@@ -200,11 +251,19 @@ const ProductosPage = () => {
     }
   };
 
+  // Paginación en el cliente
+  const indiceUltimoProducto = (paginaActual + 1) * itemsPorPagina;
+  const indicePrimerProducto = indiceUltimoProducto - itemsPorPagina;
+  
+  // Obtener solo los productos para la página actual a partir de los productos filtrados
+  const productosActuales = productosFiltrados.slice(indicePrimerProducto, indiceUltimoProducto);
+  const totalProductos = productosFiltrados.length;
+  const totalPaginas = Math.ceil(totalProductos / itemsPorPagina);
+  
   const handlePageClick = (data) => {
-    // Asegúrate de que no navegamos a páginas inválidas
     if (data.selected >= 0 && data.selected < totalPaginas) {
       setPaginaActual(data.selected);
-      window.scrollTo(0, 0); // Scroll al inicio al cambiar de página
+      window.scrollTo(0, 0);
     }
   };
   
@@ -239,7 +298,7 @@ const ProductosPage = () => {
           width: '100%',
           backgroundColor: 'rgba(255, 255, 255, 0.8)',
           padding: '2rem',
-          margin: '0 auto'  // Centra el contenedor horizontalmente
+          margin: '0 auto'
         }}>
           <div className="spinner">
             <i className="fas fa-spinner fa-spin fa-3x"></i>
@@ -271,7 +330,7 @@ const ProductosPage = () => {
         </Link>
       </div>
       
-      {/* Dashboard de estadísticas - MOVIDO ANTES DE LOS FILTROS */}
+      {/* Dashboard de estadísticas */}
       <div className="dashboard-stats">
         <div className="stat-card">
           <div className="stat-value">{totalProductos}</div>
@@ -286,58 +345,57 @@ const ProductosPage = () => {
       {/* Filtros separados debajo del dashboard */}
       <div className="filtros-container">
         <div className="search-container">
-          <input
-            type="text"
-            placeholder="Buscar por nombre o descripción..."
-            value={busqueda}
-            onChange={(e) => setBusqueda(e.target.value)}
-            className="search-input"
-          />
-          {busqueda && (
-            <button 
-              className="clear-search" 
-              onClick={() => setBusqueda('')}
-            >
-              ×
-            </button>
-          )}
+          <div className="search-input-wrapper">
+            <span className="search-icon">
+              <FaSearch />
+            </span>
+            <input
+              type="text"
+              placeholder="Buscar por nombre o descripción..."
+              value={busqueda}
+              onChange={(e) => handleBusqueda(e.target.value)}
+              className="search-input"
+            />
+            {busqueda && (
+              <button 
+                className="clear-search" 
+                onClick={() => handleBusqueda('')}
+              >
+                ×
+              </button>
+            )}
+          </div>
         </div>
         
-        <div className="categoria-dropdown">
-          <button 
-            className="dropdown-toggle"
-            onClick={toggleCategorias}
-          >
-            {categoriaSeleccionada ? 
-              `Categoría: ${categorias.find(cat => cat.id === categoriaSeleccionada)?.nombre_cat}` : 
-              'Todas las categorías'}
-            <span className="arrow-down">▼</span>
-          </button>
-          
-          {mostrarCategorias && (
-            <div className="dropdown-menu">
-              <div 
-                className={`dropdown-item ${categoriaSeleccionada === null ? 'selected' : ''}`}
-                onClick={() => {
-                  setCategoriaSeleccionada(null);
-                  setMostrarCategorias(false);
-                  setPaginaActual(0);
-                  setNecesitaRecargar(true);
-                }}
-              >
-                Todas las categorías
-              </div>
+        {/* Selector de categoría con estilo mejorado */}
+        <div className="categoria-filter">
+          <div className="categoria-wrapper">
+            <span className="categoria-icon">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M3 12h18"></path>
+                <path d="M3 18h18"></path>
+              </svg>
+            </span>
+            <select
+              value={categoriaSeleccionada}
+              onChange={handleCategoriaChange}
+              className="categoria-select filter-select"
+              disabled={cargandoCategoria}
+            >
+              <option value="">Todas las categorías</option>
               {categorias.map(categoria => (
-                <div 
-                  key={categoria.id} 
-                  className={`dropdown-item ${categoriaSeleccionada === categoria.id ? 'selected' : ''}`}
-                  onClick={() => filtrarPorCategoria(categoria.id)}
-                >
+                <option key={categoria.id} value={categoria.id}>
                   {categoria.nombre_cat}
-                </div>
+                </option>
               ))}
-            </div>
-          )}
+            </select>
+            {cargandoCategoria && (
+              <span className="categoria-loading-indicator">
+                <i className="fas fa-spinner fa-spin"></i>
+              </span>
+            )}
+          </div>
         </div>
         
         <div className="fecha-dropdown">
@@ -433,14 +491,14 @@ const ProductosPage = () => {
         )}
       </div>
       
-      {productosFiltrados.length === 0 ? (
+      {productosActuales.length === 0 ? (
         <div className="sin-resultados">
           <i className="fas fa-box-open"></i>
           <p>No hay productos disponibles con los filtros aplicados</p>
         </div>
       ) : (
         <div className="grid-productos">
-          {productosFiltrados.map(producto => (
+          {productosActuales.map(producto => (
             <div key={producto.id} className="producto-item">
               <TarjetaProducto 
                 producto={producto} 
@@ -454,7 +512,7 @@ const ProductosPage = () => {
         </div>
       )}
 
-      {productosFiltrados.length > 0 && (
+      {totalPaginas > 1 && (
         <div className="pagination-container">
           <div className="pagination">
             <button 
@@ -538,7 +596,7 @@ const ProductosPage = () => {
           </div>
           
           <div className="pagination-info">
-            Mostrando {paginaActual * 6 + 1}-{Math.min((paginaActual + 1) * 6, totalProductos)} de {totalProductos} productos
+            Mostrando {productosFiltrados.length > 0 ? paginaActual * itemsPorPagina + 1 : 0}-{Math.min((paginaActual + 1) * itemsPorPagina, totalProductos)} de {totalProductos} productos
           </div>
         </div>
       )}

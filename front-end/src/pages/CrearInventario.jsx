@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useNavigate, Link } from 'react-router-dom';
-import { obtenerProductosConStock } from '../services/productoService';
+import { obtenerTodosLosProductos } from '../services/productoService';
 import Toast from '../components/ui/Toast';
 import './css/Inventario.css';
 
@@ -34,7 +34,7 @@ const CrearInventario = () => {
     const cargarProductos = async () => {
       try {
         setCargando(true);
-        const response = await obtenerProductosConStock();
+        const response = await obtenerTodosLosProductos();
         if (response) {
           setProductos(response);
           setProductosFiltrados(response);
@@ -51,6 +51,7 @@ const CrearInventario = () => {
 
     cargarProductos();
   }, []);
+
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -69,7 +70,8 @@ const CrearInventario = () => {
   ? productos
       .filter(producto => producto && producto.nombre && 
         producto.nombre.toLowerCase().includes(productoSearch.toLowerCase()))
-      .slice(0, 5)
+      // Aumentar el número o eliminar el slice para mostrar todos
+      .slice(0, 20)  // Mostrar hasta 20 productos en vez de 5
   : [];
 
   const handleInputChange = (e) => {
